@@ -1,0 +1,4 @@
+_target_: controllers.SorbentLoadingRule
+num_units: ${dac.num_units}
+loading_low: 0.1
+loading_high: 0.9

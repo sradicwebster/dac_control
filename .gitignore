@@ -1,3 +1,11 @@
+.idea/
+data/
+wandb/
+notebooks/
+outputs/
+dac_models/old_dac.py
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

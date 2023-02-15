@@ -1,0 +1,9 @@
+_target_: dac_models.kinetics.FirstOrder
+dt: ${dt}
+k:
+  CO2:
+    ad: 0.0002
+    de: 0.001
+  H2O:
+    ad: 0.001
+    de: 0.002

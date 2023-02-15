@@ -1,0 +1,5 @@
+_target_: dynamics_model.KnownModel
+dac: ${dac}
+battery: ${battery}
+wind_model:
+  _target_: wind_model.Constant

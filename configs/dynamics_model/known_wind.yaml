@@ -1,0 +1,7 @@
+_target_: dynamics_model.KnownModel
+dac: ${dac}
+battery: ${battery}
+wind_model:
+  _target_: wind_model.Known
+  horizon: ${controller.horizon}
+  iterations: ${controller.iterations}

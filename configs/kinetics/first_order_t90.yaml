@@ -1,0 +1,9 @@
+_target_: dac_models.kinetics.FirstOrder
+dt: ${dt}
+k:
+  CO2:
+    ad: ${t90_to_k:120}
+    de: ${t90_to_k:30}
+  H2O:
+    ad: ${t90_to_k:60}
+    de: ${t90_to_k:15}

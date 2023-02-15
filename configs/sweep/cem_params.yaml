@@ -1,0 +1,27 @@
+program: system_model.py
+project: dac_system
+method: grid
+name: cem_params
+metric:
+  goal: maximize
+  name: co2_rate
+
+parameters:
+
+  controller.horizon:
+    values: [6, 8, 10]
+
+  controller.population_size:
+    values: [200, 250]
+
+  controller.alpha:
+    values: [0.2, 0.4, 0.6]
+
+command:
+  - ${env}
+  - python
+  - ${program}
+  - ${args_no_hyphens}
+  - controller=cem
+  - controller.replan=True
+  - dynamics_model=known_wind

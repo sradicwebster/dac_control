@@ -1,0 +1,25 @@
+defaults:
+  - _self_
+  - kinetics: linear
+  - unit_sizing: co2_rate
+  - battery: default
+  - dynamics_model: constant_wind
+  - controller: rule
+
+seed: 1
+dt: 20
+T: 168
+dac:
+  _target_: dac_models.dac.DAC
+  num_units: 2
+  sorbent: "Lewatit"
+process_conditions:
+  T_ad: 10.0
+  T_de: 100.0
+  p_ad: 1.05
+  p_de: 0.5
+  RH_ad: 0.8
+  RH_de: 1.0
+  CO2_conc: 412
+
+

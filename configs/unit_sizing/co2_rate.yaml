@@ -1,0 +1,4 @@
+_target_: dac_models.unit_sizing.CO2Rate
+CO2_per_cycle: 1000
+fan_power: 2000
+desorption_power: 8000
