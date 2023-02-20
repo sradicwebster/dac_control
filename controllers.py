@@ -1,12 +1,12 @@
 import numpy as np
 import omegaconf
 
-from dynamics_model import BaseDynamics
+#from dynamics_model import BaseDynamics
 
 
 class BaseController:
     def __init__(self,
-                 model: BaseDynamics):
+                 model):
         self.model = model
         
     def policy(self,
@@ -14,14 +14,14 @@ class BaseController:
         pass
     
     
-class SorbentLoadingRule(BaseController):
+class SorbentLoadingRule:
     def __init__(self,
-                 model: BaseDynamics,
+                 #model: BaseDynamics,
                  num_units: int,
                  loading_low: float,
                  loading_high: float,
                  ):
-        super().__init__(model)
+        #super().__init__(model)
         """
 
         Args:
@@ -55,7 +55,7 @@ class SorbentLoadingRule(BaseController):
 class DiscreteCrossEntropyMethod:
 
     def __init__(self,
-                 model: BaseDynamics,
+                 model,
                  horizon: int,
                  population_size: int,
                  elite_frac: float,

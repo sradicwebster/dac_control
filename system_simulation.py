@@ -1,4 +1,3 @@
-import os
 from tqdm import tqdm
 import numpy as np
 import wandb
@@ -6,7 +5,6 @@ import hydra
 from hydra.utils import instantiate
 from omegaconf import OmegaConf, DictConfig
 
-from controllers import *
 from wind_data_processing import load_wind_data
 
 
@@ -17,7 +15,11 @@ OmegaConf.register_new_resolver("t90_to_k", lambda t90: np.log(1 / 0.1) / (60 * 
 def run(cfg: DictConfig) -> None:
     np.random.seed(cfg.seed)
 
-    with wandb.init(project='dac_system', config=omegaconf.OmegaConf.to_object(cfg)) as _:
+    with wandb.init(project='dac_system', config=OmegaConf.to_object(cfg)) as _:
+        wandb.config.update({'kinetics_': cfg.kinetics._target_.split('.')[-1],
+                             'unit_sizing_': cfg.unit_sizing._target_.split('.')[-1],
+                             'controller_': cfg.controller._target_.split('.')[-1],
+                             })
 
         wind_power_series = load_wind_data(cfg.dt)
         dac = instantiate(cfg.dac,
@@ -28,13 +30,13 @@ def run(cfg: DictConfig) -> None:
         battery = hydra.utils.instantiate(cfg.battery)
 
         # TODO make dynamics model instantiation neater
-        dynamics_model = hydra.utils.instantiate(cfg.dynamics_model, _recursive_=False)
+        #dynamics_model = hydra.utils.instantiate(cfg.dynamics_model, _recursive_=False)
         # dynamics_model.dac = hydra.utils.instantiate(dynamics_model.dac)
         # dynamics_model.battery = hydra.utils.instantiate(dynamics_model.battery)
         # dynamics_model.wind_model = hydra.utils.instantiate(dynamics_model.wind_model,
         # wind_power_series)
 
-        controller = hydra.utils.instantiate(cfg.controller, model=dynamics_model)
+        controller = instantiate(cfg.controller) #model=dynamics_model)
 
         state = np.concatenate((wind_power_series[0],
                                 battery.reset().flatten(),
@@ -53,7 +55,7 @@ def run(cfg: DictConfig) -> None:
         for i in tqdm(range(iters)):
 
             controls = controller.policy(state)
-            dac_power = dac.power_requirement(controls)
+            dac_power = dac.step(controls, update_state=False, return_power=True)
             wind_power = wind_power_series[i + 1]
 
             battery_discharge = battery.discharge_power()
@@ -67,14 +69,14 @@ def run(cfg: DictConfig) -> None:
                 if unit == dac.num_units:
                     unit = 0
                     mode = -1
-                dac_power = dac.power_requirement(controls)
+                dac_power = dac.step(controls, update_state=False, return_power=True)
                 power_deficit = dac_power - wind_power - battery_discharge
 
             battery_power = dac_power - wind_power
             state = np.concatenate((wind_power,
                                     battery.step(battery_power).flatten(),
                                     dac.step(controls).flatten(),
-                                    controls
+                                    controls,
                                     ))
 
             if (i + 1) % iter_per_hour == 0:

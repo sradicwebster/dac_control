@@ -43,7 +43,7 @@ def co2_equilibrium_loading(sorbent: str,
         b_p = param["b0_p"] * np.exp(param["deltaH_p"] / (R * T0) * (T0 / T_p - 1))
         t_p = param["t0_p"] + param["alpha_p"] * (1 - T0 / T_p)
         q_p = ns_p * b_p * p / (1 + (b_p * p)**t_p)**(1 / t_p)
-    return q_c + q_p
+    return float(q_c + q_p)
 
 
 def h2o_equilibrium_loading(sorbent: str,
@@ -60,4 +60,4 @@ def h2o_equilibrium_loading(sorbent: str,
     K = param["K0"] * np.exp(param["deltaHK"] / (R * T))
     Cm = param["Cm0"] * np.exp(param["beta"] / T)
     q = Cm * CG * K * RH / ((1 - K * RH) * (1 + (CG - 1) * K * RH))
-    return q
+    return float(q)

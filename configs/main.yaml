@@ -3,7 +3,6 @@ defaults:
   - kinetics: linear
   - unit_sizing: co2_rate
   - battery: default
-  - dynamics_model: constant_wind
   - controller: rule
 
 seed: 1

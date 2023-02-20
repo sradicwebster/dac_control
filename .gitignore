@@ -3,7 +3,9 @@ data/
 wandb/
 notebooks/
 outputs/
+simple_continuous_model/
 dac_models/old_dac.py
+plotting.py
 
 
 # Byte-compiled / optimized / DLL files

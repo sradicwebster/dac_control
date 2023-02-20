@@ -53,7 +53,7 @@ class KnownModel(BaseDynamics):
         battery_power = dac_power - wind_power
         next_state = np.concatenate((wind_power,
                                      self.battery.step(battery_power),
-                                     self.dac.step(controls),
+                                     self.dac.step(, controls,,,
                                      controls,
                                      ), axis=1)
         return next_state
