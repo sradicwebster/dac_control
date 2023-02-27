@@ -1,6 +1,6 @@
 _target_: dac_models.unit_sizing.CO2Rate
 dt: ${dt}
 process_conditions: ${process_conditions}
-CO2_per_cycle: 1823
+CO2_per_cycle: 2000
 fan_power: 2000
 desorption_power: 8000

@@ -11,5 +11,5 @@ geometry:
   l: 0.05
 dq_max_cfg:
   _target_: dac_models.unit_sizing.dq_max_first_order
-  k: ${kinetics.k.CO2.ad}
+  k: ${kinetics.k.CO2.ad_max}
 sorbent: ${dac.sorbent}

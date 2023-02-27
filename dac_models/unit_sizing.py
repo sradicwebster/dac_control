@@ -102,15 +102,14 @@ class Detailed(BaseSizing):
         self.dq_max_cfg = dq_max_cfg
 
         self.R = 8.314
-        self.M_air = 28.84
+        self.M_air = 0.02884
         self.p_ad = process_conditions.p_ad
         self.T_ad = process_conditions.T_ad
         self.p_de = process_conditions.p_de
         self.T_de = process_conditions.T_de
         self.CO2_conc = process_conditions.CO2_conc
-        self.rho_air = self.p_ad * 1e2 * self.M_air / (self.R * (self.T_ad + 273))
+        self.rho_air = self.p_ad * 1e5 * self.M_air / (self.R * (self.T_ad + 273))
         self.mu_air = 1.789e-5
-
         sorbent_props = pd.read_csv("data/sorbent_properties.csv").T
         sorbent_props = sorbent_props.rename(columns=sorbent_props.iloc[0]).drop("Solid_sorbent")\
             .infer_objects()
@@ -118,18 +117,14 @@ class Detailed(BaseSizing):
         prop = sorbent_props.loc[sorbent]
         self.d_sorb = float(prop["dp"]) * 1e-3
 
-        self.Q = self._air_flow_rate(v_air, geometry)
-        self.m_sorbent = self._sorbent_mass()
-        CO2_per_cycle = (self.q_CO2_eq["ad"] - self.q_CO2_eq["de"]) * self.m_sorbent * self.M_CO2
-        # BUG this doesn't show in the UI
-        # wandb.config["unit_sizing"].update({"CO2_per_cycle": CO2_per_cycle}, allow_val_change=True)
-        wandb.log({"CO2_per_cycle": CO2_per_cycle})
-        self.P_ad = self._fan_power(geometry)
+        Q = self._air_flow_rate(v_air, geometry)
+        self.m_sorbent = self._sorbent_mass(Q)
+        self.P_ad = self._fan_power(Q, geometry)
 
-    def _sorbent_mass(self) -> float:
+    def _sorbent_mass(self, Q: float) -> float:
         dq_max = call(self.dq_max_cfg, q_CO2_eq=self.q_CO2_eq)
-        Q_req = dq_max / (self.CO2_conc * 1e-6) * self.M_air * 1e-3 / self.rho_air
-        return self.Q / Q_req
+        Q_req = dq_max / (self.CO2_conc * 1e-6) * self.M_air / self.rho_air
+        return Q / Q_req
 
     def temps_desorb_time(self,
                           mode: np.ndarray,
@@ -169,12 +164,13 @@ class Detailed(BaseSizing):
         V_skel = np.pi * (geometry.ro**2 - geometry.ri**2) / packing_density * geometry.l
         V_sor = np.pi * (geometry.ri**2 - (geometry.ri - self.d_sorb)**2) * geometry.l
         self.ep = 1 - V_sor / (V_skel + V_sor)
-        n_plates = int(V_filter / (V_skel + V_sor))
-        self.m_skel = rho_al * V_skel * n_plates
-        A_flow = n_plates * np.pi * (geometry.ri - self.d_sorb)**2
+        n_cells = int(V_filter / (V_skel + V_sor))
+        self.m_skel = rho_al * V_skel * n_cells
+        A_flow = n_cells * np.pi * (geometry.ri - self.d_sorb) ** 2
         return v_air * A_flow
 
     def _fan_power(self,
+                   Q: float,
                    geometry: DictConfig,
                    ):
         Re = self.rho_air * self.v_air * self.d_sorb / self.mu_air
@@ -186,7 +182,7 @@ class Detailed(BaseSizing):
             * (geometry.l / self.d_sorb) ** n2
         deltaP = f * geometry.l * self.rho_air * self.v_air ** 2 / self.d_sorb
         fan_eff = 0.6
-        return deltaP * self.Q / (fan_eff * 1000)
+        return deltaP * Q / (fan_eff * 1000)
 
     def _sensible_heat(self, T, q_CO2, q_H2O):
         cp_sorbent = 1.58

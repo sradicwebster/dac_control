@@ -44,9 +44,10 @@ def run(cfg: DictConfig) -> None:
                                 np.zeros(dac.num_units),
                                 ))
         hour = 0
-        wandb.log({"wind_power": state[0], "battery_soc": state[1], "time (h)": hour})
+        wandb.log({"wind_power": state[0], "battery_soc": state[1] * battery.capacity,
+                   "time (h)": hour})
         for i in range(cfg.dac.num_units):
-            wandb.log({f"dac_{i + 1}_loading": state[2 + i],
+            wandb.log({f"dac_{i + 1}_loading": state[2 + i] * dac.q_CO2_eq["ad"],
                        "time (h)": hour})
 
         iter_per_hour = 60 / cfg.dt
@@ -82,16 +83,21 @@ def run(cfg: DictConfig) -> None:
             if (i + 1) % iter_per_hour == 0:
                 hour += 1
             for u in range(cfg.dac.num_units):
-                wandb.log({f"dac_{u + 1}_loading": state[2 + u],
+                wandb.log({f"dac_{u + 1}_loading": state[2 + u] * dac.q_CO2_eq["ad"],
                            "time (h)": hour},
                           commit=False)
             wandb.log({"wind_power": state[0],
-                       "battery_soc": state[1],
+                       "dac_power": dac_power,
+                       "battery_soc": state[1] * battery.capacity,
                        "co2_captured": dac.CO2_captured,
                        "time (h)": hour})
             total_co2_captured += dac.CO2_captured
 
-        wandb.log({"co2_rate": total_co2_captured / cfg.T})
+        wandb.config.update({"co2_rate_kg_h": total_co2_captured / cfg.T,
+                             "co2_rate_ton_yr": total_co2_captured / cfg.T / 1e3 * 24 * 365})
+        if "geometry" in cfg.unit_sizing:
+            wandb.config.update({"prod_kg_h_m3": total_co2_captured / cfg.T /
+                                                 cfg.unit_sizing.geometry.unit_volume})
 
 
 if __name__ == "__main__":

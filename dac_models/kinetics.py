@@ -40,7 +40,7 @@ class Linear(BaseKinetics):
             q_H2O_eq: adsorption and desorption H2O equilibrium loading per unit (kg)
             max_adsorption_rate: adsorption rate of CO2 with fan on (mol_CO2 / kg_sorbent / h)
             ambient_adsorption_rate: adsorption rate of CO2 with fan off (mol_CO2 / kg_sorbent / h)
-            desorption_rate: desorption rate of CO2 (mol_CO2 / kg_sorbent / h
+            desorption_rate: desorption rate of CO2 (mol_CO2 / kg_sorbent / h)
         """
         super().__init__(dt, q_CO2_eq, q_H2O_eq, m_sorbent)
         self.max_ad_rate = max_adsorption_rate
@@ -85,6 +85,6 @@ class FirstOrder(BaseKinetics):
         time = np.where(mode == -1, t_desorb, self.dt) * 60
         new_q = np.select([mode < 0, mode == 0, mode > 0],
                           [self._ode_sol(q_i, self.q_eq[comp]["de"], self.k[comp]["de"], time),
-                           q_i,
-                           self._ode_sol(q_i, self.q_eq[comp]["ad"], self.k[comp]["ad"], time)])
+                           self._ode_sol(q_i, self.q_eq[comp]["ad"], self.k[comp]["ad_amb"], time),
+                           self._ode_sol(q_i, self.q_eq[comp]["ad"], self.k[comp]["ad_max"], time)])
         return new_q
