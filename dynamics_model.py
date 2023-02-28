@@ -1,13 +1,13 @@
 import numpy as np
 
-#from simple_discrete_model.dac.dac import DirectAirCapture
+from dac_models.dac import DAC
 from battery import Battery
 from wind_model import BaseModel
 
 
 class BaseDynamics:
     def __init__(self,
-                 dac,
+                 dac: DAC,
                  battery: Battery,
                  wind_model: BaseModel,
                  ):
@@ -37,7 +37,7 @@ class KnownModel(BaseDynamics):
              state: np.ndarray,
              controls: np.ndarray,
              ):
-        dac_power = self.dac.power_requirement(controls)
+        dac_power = self.dac.step(controls, update_state=False, return_power=True)
         wind_power = self.wind_model.next(state)
         battery_discharge = self.battery.discharge_power()
         power_deficit = (dac_power - wind_power - battery_discharge) > 1e-3
@@ -47,13 +47,13 @@ class KnownModel(BaseDynamics):
                 for unit in range(self.num_units):
                     controls[:, unit] *= np.logical_not(np.logical_and(power_deficit.flatten(),
                                                                        controls[:, unit] == mode))
-                    dac_power = self.dac.power_requirement(controls)
+                    dac_power = self.dac.step(controls, update_state=False, return_power=True)
                     power_deficit = (dac_power - wind_power - battery_discharge) > 1e-3
 
         battery_power = dac_power - wind_power
         next_state = np.concatenate((wind_power,
                                      self.battery.step(battery_power),
-                                     self.dac.step(, controls,,,
+                                     self.dac.step(controls),
                                      controls,
                                      ), axis=1)
         return next_state

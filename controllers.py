@@ -1,27 +1,22 @@
 import numpy as np
-import omegaconf
 
-#from dynamics_model import BaseDynamics
+from dynamics_model import BaseDynamics
 
 
 class BaseController:
-    def __init__(self,
-                 model):
-        self.model = model
         
     def policy(self,
-               state: np.ndarray):
+               state: np.ndarray,
+               ) -> np.ndarray:
         pass
     
     
-class SorbentLoadingRule:
+class SorbentLoadingRule(BaseController):
     def __init__(self,
-                 #model: BaseDynamics,
                  num_units: int,
                  loading_low: float,
                  loading_high: float,
                  ):
-        #super().__init__(model)
         """
 
         Args:
@@ -35,15 +30,8 @@ class SorbentLoadingRule:
         self.prev_mode = np.zeros(self.num_units)
 
     def policy(self,
-               state: np.ndarray):
-        """
-
-        Args:
-            state:
-
-        Returns:
-
-        """
+               state: np.ndarray,
+               ) -> np.ndarray:
         loading = state[2:2+self.num_units]
         mode = np.where(self.prev_mode == 0, 1, self.prev_mode)
         mode = np.where(loading <= self.loading_low, 1, mode)
@@ -52,10 +40,10 @@ class SorbentLoadingRule:
         return mode
 
 
-class DiscreteCrossEntropyMethod:
+class DiscreteCrossEntropyMethod(BaseController):
 
     def __init__(self,
-                 model,
+                 model: BaseDynamics,
                  horizon: int,
                  population_size: int,
                  elite_frac: float,
@@ -77,20 +65,15 @@ class DiscreteCrossEntropyMethod:
 
     def policy(self,
                state: np.ndarray,
-               ):
-        self.model.battery.soc = np.repeat(state[1].reshape(1, -1), self.population_size, axis=0)
-        self.model.dac.loading = np.repeat(state[2: 2 + self.model.dac.num_units].reshape(1, -1),
-                                           self.population_size, axis=0)
+               ) -> np.ndarray:
+        self.model.dac.reset(n=self.population_size)
+        self.model.battery.reset(n=self.population_size)
+
         if self.replan:
             self.action_prob = np.ones((self.horizon, self.num_units, 3)) / 3
         else:
             self.action_prob = np.concatenate((self.action_prob[1:, ...],
                                                np.ones((1, self.num_units, 3)) / 3))
-
-        prob_add = 0
-        for u in range(self.num_units):
-            self.action_prob[0][u, (state[-self.num_units:].astype(int) + 1)[u]] += prob_add
-        self.action_prob[0] /= (1 + prob_add)
 
         for i in range(self.iterations):
             state_pop = np.repeat(state.reshape(1, -1), self.population_size, axis=0)
@@ -105,7 +88,7 @@ class DiscreteCrossEntropyMethod:
                 next_state_pop = self.model.step(state_pop, controls)
                 start_desorb = np.logical_and(state_pop[:, -self.num_units:] != -1,
                                               controls == -1).sum(1)
-                rewards[:, h] = self.model.dac.captured - self.desorb_pen * start_desorb
+                rewards[:, h] = self.model.dac.CO2_captured - self.desorb_pen * start_desorb
                 state_pop = next_state_pop
             elite = population[np.flip(np.argsort(rewards.sum(axis=1)))[:self.elite_num]]
             for h in range(self.horizon):

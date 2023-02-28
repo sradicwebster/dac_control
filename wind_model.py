@@ -2,22 +2,18 @@ import numpy as np
 
 
 class BaseModel:
-    def __init__(self,
-                 wind_power: np.ndarray):
-        self.wind_power = wind_power
 
     def next(self,
-             state: np.ndarray):
+             state: np.ndarray,
+             ) -> np.ndarray:
         pass
 
 
 class Constant(BaseModel):
-    def __init__(self,
-                 wind_power: np.ndarray):
-        super().__init__(wind_power)
 
     def next(self,
-             state: np.ndarray):
+             state: np.ndarray,
+             ) -> np.ndarray:
         return state[:, 0].reshape(-1, 1)
 
 
@@ -27,7 +23,7 @@ class Known(BaseModel):
                  horizon: int,
                  iterations: int
                  ):
-        super().__init__(wind_power)
+        self.wind_power = wind_power
         self.horizon = horizon
         self.iterations = iterations
         self.step = 1
@@ -35,7 +31,8 @@ class Known(BaseModel):
         self.h = 0
 
     def next(self,
-             state: np.ndarray):
+             state: np.ndarray,
+             ) -> np.ndarray:
         wind = np.repeat(self.wind_power[self.step + self.h].reshape(-1, 1), len(state), axis=0)
         self.h += 1
         if self.h == self.horizon:

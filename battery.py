@@ -34,8 +34,8 @@ class Battery:
         self.soc = None
         self.dt = dt
 
-    def reset(self):
-        self.soc = np.array([self.soc_max]).reshape(1, -1)
+    def reset(self, n=1):
+        self.soc = np.ones((n, 1)) * self.soc_max
         return self.soc / self.capacity
 
     def step(self, power):

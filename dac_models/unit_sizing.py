@@ -16,7 +16,7 @@ class BaseSizing:
         self.dt = dt
         self.q_CO2_eq = q_CO2_eq
         self.process_conditions = process_conditions,
-        # TODO for some reason process_conditions is being turned into a tuple, fix!
+        # for some reason process_conditions is being turned into a tuple
         if isinstance(self.process_conditions, tuple):
             self.process_conditions = self.process_conditions[0]
         self.M_CO2 = 0.044009
@@ -153,8 +153,9 @@ class Detailed(BaseSizing):
                           ) -> np.ndarray:
         E_de = self._heat_of_reaction(q_CO2 - q_CO2_next, q_H2O - q_H2O_next) + \
                self._sensible_heat(T_units, q_CO2, q_H2O)
-        # TODO can P_de > P_heater?
-        P_de = np.minimum(E_de / (60 * self.dt), self.P_heater)
+        # TODO what to do when P_de > P_heater?
+        #P_de = np.minimum(E_de / (60 * self.dt), self.P_heater)
+        P_de = E_de / (60 * self.dt)
         return np.select([mode < 0, mode == 0, mode > 0], [P_de, 0.0, self.P_ad])
 
     def _air_flow_rate(self, v_air: float, geometry: DictConfig) -> float:

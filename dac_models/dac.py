@@ -37,10 +37,10 @@ class DAC:
         self.T_units = None
         self.CO2_captured = None
 
-    def reset(self) -> np.ndarray:
-        self.q_CO2 = np.ones((1, self.num_units)) * self.q_CO2_eq["de"]
-        self.q_H2O = np.ones((1, self.num_units)) * self.q_H2O_eq["de"]
-        self.T_units = np.ones((1, self.num_units)) * self.process_conditions.T_ad
+    def reset(self, n=1) -> np.ndarray:
+        self.q_CO2 = np.ones((n, self.num_units)) * self.q_CO2_eq["de"]
+        self.q_H2O = np.ones((n, self.num_units)) * self.q_H2O_eq["de"]
+        self.T_units = np.ones((n, self.num_units)) * self.process_conditions.T_ad
         return self.q_CO2 / self.q_CO2_eq["ad"]
 
     def step(self,

@@ -4,6 +4,7 @@ import wandb
 import hydra
 from hydra.utils import instantiate
 from omegaconf import OmegaConf, DictConfig
+from copy import deepcopy
 
 from wind_data_processing import load_wind_data
 
@@ -29,14 +30,15 @@ def run(cfg: DictConfig) -> None:
                           _recursive_=False)
         battery = hydra.utils.instantiate(cfg.battery)
 
-        # TODO make dynamics model instantiation neater
-        #dynamics_model = hydra.utils.instantiate(cfg.dynamics_model, _recursive_=False)
-        # dynamics_model.dac = hydra.utils.instantiate(dynamics_model.dac)
-        # dynamics_model.battery = hydra.utils.instantiate(dynamics_model.battery)
-        # dynamics_model.wind_model = hydra.utils.instantiate(dynamics_model.wind_model,
-        # wind_power_series)
-
-        controller = instantiate(cfg.controller) #model=dynamics_model)
+        if "dynamics_model" in cfg:
+            dynamics_model = hydra.utils.instantiate(cfg.dynamics_model, dac=deepcopy(dac),
+                                                     battery=deepcopy(battery))
+            controller = instantiate(cfg.controller, model=dynamics_model)
+            wandb.config.update({'dynamics_model_': cfg.dynamics_model._target_.split('.')[-1],
+                                 'wind_model_': cfg.dynamics_model.wind_model._target_.split('.')[-1],
+                                 })
+        else:
+            controller = instantiate(cfg.controller)
 
         state = np.concatenate((wind_power_series[0],
                                 battery.reset().flatten(),
@@ -44,11 +46,12 @@ def run(cfg: DictConfig) -> None:
                                 np.zeros(dac.num_units),
                                 ))
         hour = 0
-        wandb.log({"wind_power": state[0], "battery_soc": state[1] * battery.capacity,
-                   "time (h)": hour})
         for i in range(cfg.dac.num_units):
             wandb.log({f"dac_{i + 1}_loading": state[2 + i] * dac.q_CO2_eq["ad"],
-                       "time (h)": hour})
+                       "time (h)": hour}, commit=False)
+        wandb.log({"wind_power": state[0],
+                   "battery_soc": state[1] * battery.capacity,
+                   "time (h)": hour})
 
         iter_per_hour = 60 / cfg.dt
         iters = int(cfg.T * iter_per_hour)
@@ -84,8 +87,7 @@ def run(cfg: DictConfig) -> None:
                 hour += 1
             for u in range(cfg.dac.num_units):
                 wandb.log({f"dac_{u + 1}_loading": state[2 + u] * dac.q_CO2_eq["ad"],
-                           "time (h)": hour},
-                          commit=False)
+                           "time (h)": hour}, commit=False)
             wandb.log({"wind_power": state[0],
                        "dac_power": dac_power,
                        "battery_soc": state[1] * battery.capacity,
