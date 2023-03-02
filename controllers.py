@@ -1,6 +1,6 @@
 import numpy as np
-
-from dynamics_model import BaseDynamics
+from omegaconf import DictConfig
+import stable_baselines3
 
 
 class BaseController:
@@ -11,7 +11,7 @@ class BaseController:
         pass
     
     
-class SorbentLoadingRule(BaseController):
+class LoadingRule(BaseController):
     def __init__(self,
                  num_units: int,
                  loading_low: float,
@@ -40,10 +40,9 @@ class SorbentLoadingRule(BaseController):
         return mode
 
 
-class DiscreteCrossEntropyMethod(BaseController):
-
+class DiscreteCEM(BaseController):
     def __init__(self,
-                 model: BaseDynamics,
+                 model,
                  horizon: int,
                  population_size: int,
                  elite_frac: float,
@@ -99,3 +98,17 @@ class DiscreteCrossEntropyMethod(BaseController):
                     self.action_prob[h, u] = self.alpha * self.action_prob[h, u] +\
                                              (1 - self.alpha) * probs
         return np.argmax(self.action_prob[0], axis=1) - 1
+
+
+class RLAgent(BaseController):
+    def __init__(self,
+                 algorithm: DictConfig,
+                 training_timesteps: int,
+                 wandb_name: str,
+                 ):
+        self.agent = eval(algorithm._target_).load(f"trained_agents/{wandb_name}")
+
+    def policy(self,
+               state: np.ndarray,
+               ) -> np.ndarray:
+        return self.agent.predict(state, deterministic=True)[0] - 1

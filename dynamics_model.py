@@ -1,37 +1,22 @@
 import numpy as np
+from omegaconf import DictConfig
+from hydra.utils import instantiate
 
 from dac_models.dac import DAC
 from battery import Battery
-from wind_model import BaseModel
 
 
-class BaseDynamics:
+class KnownModel:
     def __init__(self,
                  dac: DAC,
                  battery: Battery,
-                 wind_model: BaseModel,
+                 wind_model: DictConfig,
+                 wind_power: np.ndarray
                  ):
         self.dac = dac
         self.battery = battery
-        self.wind_model = wind_model
+        self.wind_model = instantiate(wind_model, wind_power=wind_power)
         self.num_units = dac.num_units
-
-    def step(self,
-             state: np.ndarray,
-             controls: np.ndarray,
-             ):
-        pass
-
-
-class KnownModel(BaseDynamics):
-    def __init__(self,
-                 dac,
-                 battery: Battery,
-                 wind_model: BaseModel):
-
-        super().__init__(dac,
-                         battery,
-                         wind_model)
 
     def step(self,
              state: np.ndarray,

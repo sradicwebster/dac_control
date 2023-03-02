@@ -1,7 +1,6 @@
 import numpy as np
 from hydra.utils import instantiate
 from omegaconf import DictConfig
-import wandb
 
 from .isotherm import equilibrium_loadings
 
@@ -29,8 +28,6 @@ class DAC:
                          for mode in q_H2O_eq.keys()}
         self.kinetics = instantiate(kinetics_cfg, q_CO2_eq=self.q_CO2_eq, q_H2O_eq=self.q_H2O_eq,
                                     m_sorbent=self.unit_sizing.m_sorbent)
-        CO2_per_cycle = self.q_CO2_eq["ad"] - self.q_CO2_eq["de"]
-        wandb.config.CO2_per_cycle_kg = CO2_per_cycle
 
         self.q_CO2 = None
         self.q_H2O = None

@@ -36,7 +36,7 @@ class Battery:
 
     def reset(self, n=1):
         self.soc = np.ones((n, 1)) * self.soc_max
-        return self.soc / self.capacity
+        return self.soc / self.soc_max
 
     def step(self, power):
         """
@@ -54,7 +54,7 @@ class Battery:
                           power * (self.dt / 60) / self.discharge_eff,
                           power * (self.dt / 60) * self.charge_eff)
         self.soc = np.clip(self.soc - energy, self.soc_min, self.soc_max)
-        return self.soc / self.capacity
+        return self.soc / self.soc_max
 
     def discharge_power(self):
         discharge = np.minimum((self.soc - self.soc_min) * self.capacity / (self.dt / 60),

@@ -4,6 +4,8 @@ wandb/
 notebooks/
 outputs/
 simple_continuous_model/
+tb_log/
+trained_agents/
 dac_models/old_dac.py
 plotting.py
 

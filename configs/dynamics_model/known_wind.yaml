@@ -1,8 +1,5 @@
 _target_: dynamics_model.KnownModel
 wind_model:
   _target_: wind_model.Known
-  wind_power:
-    _target_: wind_data_processing.load_wind_data
-    dt: ${dt}
   horizon: ${controller.horizon}
   iterations: ${controller.iterations}

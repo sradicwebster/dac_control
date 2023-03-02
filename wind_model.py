@@ -2,6 +2,10 @@ import numpy as np
 
 
 class BaseModel:
+    def __init__(self,
+                 wind_power: np.ndarray,
+                 ):
+        self.wind_power = wind_power
 
     def next(self,
              state: np.ndarray,
@@ -14,7 +18,7 @@ class Constant(BaseModel):
     def next(self,
              state: np.ndarray,
              ) -> np.ndarray:
-        return state[:, 0].reshape(-1, 1)
+        return state[:, 0].reshape(-1, 1) * np.max(self.wind_power)
 
 
 class Known(BaseModel):
@@ -23,7 +27,7 @@ class Known(BaseModel):
                  horizon: int,
                  iterations: int
                  ):
-        self.wind_power = wind_power
+        super().__init__(wind_power)
         self.horizon = horizon
         self.iterations = iterations
         self.step = 1

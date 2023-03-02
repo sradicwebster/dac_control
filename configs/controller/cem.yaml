@@ -1,5 +1,5 @@
-_target_: controllers.DiscreteCrossEntropyMethod
-horizon: 6
+_target_: controllers.DiscreteCEM
+horizon: 10
 population_size: 200
 elite_frac: 0.1
 iterations: 5
