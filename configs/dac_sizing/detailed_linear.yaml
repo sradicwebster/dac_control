@@ -1,4 +1,4 @@
-_target_: dac_models.unit_sizing.Detailed
+_target_: models.dac_sizing.Detailed
 dt: ${dt}
 process_conditions: ${process_conditions}
 v_air: 0.15
@@ -10,6 +10,6 @@ geometry:
   ro: 0.00505
   l: 0.05
 dq_max_cfg:
-  _target_: dac_models.unit_sizing.dq_max_first_order
-  k: ${kinetics.k.CO2.ad_max}
+  _target_: models.dac_sizing.dq_max_linear
+  max_adsorption_rate: ${kinetics.max_adsorption_rate}
 sorbent: ${dac.sorbent}

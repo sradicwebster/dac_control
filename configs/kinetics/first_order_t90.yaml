@@ -1,4 +1,4 @@
-_target_: dac_models.kinetics.FirstOrder
+_target_: models.kinetics.FirstOrder
 dt: ${dt}
 k:
   CO2:

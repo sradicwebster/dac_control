@@ -2,8 +2,8 @@ import numpy as np
 from omegaconf import DictConfig
 from hydra.utils import instantiate
 
-from dac_models.dac import DAC
-from battery import Battery
+from models.dac import DAC
+from models.battery import Battery
 
 
 class KnownModel:

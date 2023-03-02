@@ -1,4 +1,4 @@
-_target_: dac_models.kinetics.Linear
+_target_: models.kinetics.Linear
 dt: ${dt}
 max_adsorption_rate: 1.0
 ambient_adsorption_rate: 0.5

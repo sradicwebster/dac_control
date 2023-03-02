@@ -1,10 +1,10 @@
-program: system_model.py
+program: system_simulation.py
 project: dac_system
 method: bayes
 name: rule_limits
 metric:
   goal: maximize
-  name: co2_rate
+  name: co2_rate_kg_h
 
 parameters:
 

@@ -1,4 +1,4 @@
-_target_: battery.Battery
+_target_: models.battery.Battery
 capacity: 4000
 power_max: 2000
 charge_eff: 0.9

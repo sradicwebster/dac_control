@@ -17,7 +17,7 @@ def run(cfg: DictConfig) -> None:
 
     with wandb.init(project='dac_system', config=OmegaConf.to_object(cfg)) as _:
         wandb.config.update({'kinetics_': cfg.kinetics._target_.split('.')[-1],
-                             'unit_sizing_': cfg.unit_sizing._target_.split('.')[-1],
+                             'dac_sizing_': cfg.dac_sizing._target_.split('.')[-1],
                              'controller_': cfg.controller._target_.split('.')[-1],
                              })
 
@@ -25,7 +25,7 @@ def run(cfg: DictConfig) -> None:
         wind_max = wind_power_series.max()
         dac = instantiate(cfg.dac,
                           process_conditions=cfg.process_conditions,
-                          unit_sizing_cfg=cfg.unit_sizing,
+                          dac_sizing_cfg=cfg.dac_sizing,
                           kinetics_cfg=cfg.kinetics,
                           _recursive_=False)
         battery = hydra.utils.instantiate(cfg.battery)
@@ -102,9 +102,9 @@ def run(cfg: DictConfig) -> None:
 
         wandb.config.update({"co2_rate_kg_h": total_co2_captured / cfg.T,
                              "co2_rate_ton_yr": total_co2_captured / cfg.T / 1e3 * 24 * 365})
-        if "geometry" in cfg.unit_sizing:
+        if "geometry" in cfg.dac_sizing:
             wandb.config.update({"prod_kg_h_m3": total_co2_captured / cfg.T /
-                                                 cfg.unit_sizing.geometry.unit_volume})
+                                                 cfg.dac_sizing.geometry.unit_volume})
 
 
 if __name__ == "__main__":

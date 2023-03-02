@@ -1,5 +1,5 @@
-_target_: dynamics_model.KnownModel
+_target_: models.dynamics_model.KnownModel
 wind_model:
-  _target_: wind_model.Known
+  _target_: models.wind_model.Known
   horizon: ${controller.horizon}
   iterations: ${controller.iterations}

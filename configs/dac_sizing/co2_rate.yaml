@@ -1,4 +1,4 @@
-_target_: dac_models.unit_sizing.CO2Rate
+_target_: models.dac_sizing.CO2Rate
 dt: ${dt}
 process_conditions: ${process_conditions}
 CO2_per_cycle: 2000
