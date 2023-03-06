@@ -8,7 +8,6 @@ import gym
 from gym.spaces import Box, MultiDiscrete
 import stable_baselines3
 from stable_baselines3.common.callbacks import BaseCallback
-from stable_baselines3.common.env_util import make_vec_env
 
 from wind_data_processing import load_wind_data
 
@@ -16,6 +15,9 @@ OmegaConf.register_new_resolver("t90_to_k", lambda t90: np.log(1 / 0.1) / (60 * 
 
 
 class DACEnv(gym.Env):
+    """
+    DAC system implemented as a Gym environment
+    """
     def __init__(self,
                  cfg: DictConfig,
                  ):
@@ -99,12 +101,13 @@ class WandBLogging(BaseCallback):
 
     def _on_step(self) -> bool:
         for u in range(self.env.dac.num_units):
-            wandb.log({f"dac_{u + 1}_loading": self.env.state[2 + u] * self.env.dac.q_CO2_eq["ad"]},
-                      commit=False)
-        wandb.log({"wind_power": self.env.state[0] * self.env.wind_max,
-                   "dac_power": self.env.dac_power,
-                   "battery_soc": self.env.state[1] * self.env.battery.capacity,
-                   "co2_captured": self.env.dac.CO2_captured})
+            wandb.log({f"DAC_{u + 1}_loading_(kg)": self.env.state[2 + u] *
+                                                    self.env.dac.q_CO2_eq["ad"]}, commit=False)
+        wandb.log({"Wind_power_(kW)": self.env.state[0] * self.env.wind_max,
+                   "DAC_power_(kW)": self.env.dac_power,
+                   "Battery_SOC_(kWh)": self.env.state[1] * self.env.battery.capacity,
+                   "CO2_captured_(kg)": self.env.dac.CO2_captured,
+                   })
         return True
 
 
@@ -113,7 +116,6 @@ def run(cfg: DictConfig):
     wandb.init(project="dac_system_rl_train", config=OmegaConf.to_object(cfg),
                sync_tensorboard=True)
     env = DACEnv(cfg)
-    # env = make_vec_env(DACEnv, n_envs=4, env_kwargs={"cfg": cfg})
     agent = instantiate(cfg.controller.algorithm, env=env, verbose=0, tensorboard_log="tb_log")
     agent.learn(cfg.controller.training_timesteps,
                 callback=WandBLogging(verbose=0))

@@ -1,11 +1,23 @@
 import numpy as np
 import pandas as pd
 from omegaconf import DictConfig
+from typing import Tuple, Optional
 
 
 def equilibrium_loadings(sorbent: str,
                          cond: DictConfig,
-                         ):
+                         ) -> Tuple[dict, dict]:
+    """ Calculates the equilibrium loading for CO2 and H2O for a given sorbent at specified process
+        conditions
+
+    Args:
+        sorbent (str): sorbent name
+        cond (DictConfig): process conditions for adsorption and desorption
+
+    Returns:
+        (tuple of two dict): CO2 and H2O equilibrium loadings for adsorption and desorption
+
+    """
     qeq_co2_ad = co2_equilibrium_loading(sorbent, cond["T_ad"], cond["p_ad"], cond["CO2_conc"],
                                          RH=cond["RH_ad"])
     qeq_co2_de = co2_equilibrium_loading(sorbent, cond["T_de"], cond["p_de"], cond["CO2_conc"],
@@ -19,8 +31,22 @@ def co2_equilibrium_loading(sorbent: str,
                             T_degC: float,
                             p_bar: float,
                             co2_ppm: float,
-                            RH: float = 0,
-                            ):
+                            RH: Optional[float] = 0,
+                            ) -> float:
+    """ CO2 equilibrium loading from Sabatino et al (2021) A comparative energy and costs assessment
+        and optimization for direct air capture technologies
+
+    Args:
+        sorbent (str): sorbent name
+        T_degC (float): temperature (degree Celsius)
+        p_bar (float): pressure (bar)
+        co2_ppm (float): CO2 concentration (ppm)
+        RH (optional, float): relative humidity
+
+    Returns:
+        (float): equilibrium loading of CO2
+
+    """
     co2_params = pd.read_csv("data/co2_isotherm_data.csv").T
     co2_params = co2_params.rename(columns=co2_params.iloc[0]).drop("Solid_sorbent").infer_objects()
     assert sorbent in co2_params.index
@@ -49,7 +75,19 @@ def co2_equilibrium_loading(sorbent: str,
 def h2o_equilibrium_loading(sorbent: str,
                             T_degC: float,
                             RH: float,
-                            ):
+                            ) -> float:
+    """ H2O equilibrium loading from Sabatino et al (2021) A comparative energy and costs assessment
+        and optimization for direct air capture technologies
+
+    Args:
+        sorbent (str): sorbent name
+        T_degC (float): temperature (degree Celsius)
+        RH (float): relative humidity
+
+    Returns:
+        (float): equilibrium loading of H2O
+
+    """
     h2o_params = pd.read_csv("data/h20_isotherm_data.csv").T
     h2o_params = h2o_params.rename(columns=h2o_params.iloc[0]).drop("Parameter").infer_objects()
     assert sorbent in h2o_params.index

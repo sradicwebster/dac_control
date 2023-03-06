@@ -4,25 +4,39 @@ import stable_baselines3
 
 
 class BaseController:
-        
+    """
+    Base class for DAC system control
+    """
     def policy(self,
                state: np.ndarray,
                ) -> np.ndarray:
+        """ Provide the control action (DAC mode) based on the current state of the system
+
+        Args:
+            state (np.ndarray): current state
+
+        Returns:
+            (np.ndarray): control mode
+
+        """
         pass
     
     
 class LoadingRule(BaseController):
+    """
+    Rule based controller based on high and low loading limits
+    """
     def __init__(self,
                  num_units: int,
                  loading_low: float,
                  loading_high: float,
-                 ):
+                 ) -> None:
         """
 
         Args:
-            num_units: number of DAC units
-            loading_low: loading fraction to start adsorption
-            loading_high: loading fraction to start desorption
+            num_units (int): number of DAC units
+            loading_low (float): loading fraction to start adsorption
+            loading_high (float): loading fraction to start desorption
         """
         self.num_units = num_units
         self.loading_low = loading_low
@@ -32,6 +46,15 @@ class LoadingRule(BaseController):
     def policy(self,
                state: np.ndarray,
                ) -> np.ndarray:
+        """ Provide the control action (DAC mode) based on the current state of the system
+
+        Args:
+            state (np.ndarray): current state
+
+        Returns:
+            (np.ndarray): control mode
+
+        """
         loading = state[2:2+self.num_units]
         mode = np.where(self.prev_mode == 0, 1, self.prev_mode)
         mode = np.where(loading <= self.loading_low, 1, mode)
@@ -41,12 +64,27 @@ class LoadingRule(BaseController):
 
 
 class UnitCyclingRule(BaseController):
+    """
+    Cycle around the DAC so 1 is desorbing whilst the others are adsorbing
+    """
     def __init__(self,
                  num_units: int,
                  dt: int,
                  regen_time: int,
                  max_cycles: int,
                  ):
+        """
+
+        Args:
+            num_units (int): number of DAC units
+            dt (int): time step (mins)
+            regen_time (int): desorption time (mins)
+            max_cycles (int): maximum number of cycles a particular unit waits inbetween desorption,
+                only affect if num_units > max_cycles for example if num_units = 10 and max_cycle =
+                6 the controller iterates around dac number: [0, 1], [2, 3], [4, 5], [6, 7], [8],
+                [9]
+
+        """
         self.num_units = num_units
         self.unit_ops = np.array_split(np.arange(num_units), min(num_units, max_cycles))
         self.regen_steps = np.ceil(regen_time / dt).astype(int)
@@ -56,6 +94,15 @@ class UnitCyclingRule(BaseController):
     def policy(self,
                state: np.ndarray,
                ) -> np.ndarray:
+        """ Provide the control action (DAC mode) based on the current state of the system
+
+        Args:
+            state (np.ndarray): current state
+
+        Returns:
+            (np.ndarray): control mode
+
+        """
         controls = np.ones(self.num_units)
         controls[self.unit_ops[self.unit_op]] *= -1
         self.step += 1
@@ -66,6 +113,9 @@ class UnitCyclingRule(BaseController):
 
 
 class DiscreteCEM(BaseController):
+    """
+    Discrete cross entropy method stochastic optimisation
+    """
     def __init__(self,
                  model,
                  horizon: int,
@@ -76,6 +126,21 @@ class DiscreteCEM(BaseController):
                  replan: bool,
                  desorb_pen: float,
                  ):
+        """
+
+        Args:
+            model: dynamics model instance
+            horizon (int): number of time steps in the prediction/control horizon
+            population_size (int): population size
+            elite_frac (float): fraction of the population to use for action distrubution update,
+                elite population size = int(elite_frac * population_size)
+            iterations:
+            alpha (float): Polyak average weighting parameter,
+                param_new = alpha * param_old + (1 - alpha) * param_estimate
+            replan (bool): if 'True' replan every timestep from a uniform distribution, if 'False'
+                keep the action distribution from the previous time step
+            desorb_pen (float): reward function penalty for starting to desorb
+        """
         self.model = model
         self.horizon = horizon
         self.population_size = population_size
@@ -90,6 +155,15 @@ class DiscreteCEM(BaseController):
     def policy(self,
                state: np.ndarray,
                ) -> np.ndarray:
+        """ Provide the control action (DAC mode) based on the current state of the system
+
+        Args:
+            state (np.ndarray): current state
+
+        Returns:
+            (np.ndarray): control mode
+
+        """
         self.model.dac.reset(n=self.population_size)
         self.model.battery.reset(n=self.population_size)
 
@@ -126,14 +200,33 @@ class DiscreteCEM(BaseController):
 
 
 class RLAgent(BaseController):
+    """
+    Deploy reinforcement learning agent trained using Stable Baselines 3
+    """
     def __init__(self,
                  algorithm: DictConfig,
                  training_timesteps: int,
                  wandb_name: str,
-                 ):
+                 ) -> None:
+        """
+
+        Args:
+            algorithm (DictConfig): algorithm parameters
+            training_timesteps (int): number of training time steps
+            wandb_name (str): Weights & Biases name for training
+        """
         self.agent = eval(algorithm._target_).load(f"trained_agents/{wandb_name}")
 
     def policy(self,
                state: np.ndarray,
                ) -> np.ndarray:
+        """ Provide the control action (DAC mode) based on the current state of the system
+
+        Args:
+            state (np.ndarray): current state
+
+        Returns:
+            (np.ndarray): control mode
+
+        """
         return self.agent.predict(state, deterministic=True)[0] - 1

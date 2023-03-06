@@ -62,10 +62,12 @@ def run(cfg: DictConfig) -> None:
         wandb.config.CO2_per_cycle_kg = dac.num_units * (dac.q_CO2_eq["ad"] - dac.q_CO2_eq["de"])
         for u in range(cfg.dac.num_units):
             wandb.log({f"DAC_{u + 1}_loading_(kg)": state[2 + u] * dac.q_CO2_eq["ad"],
-                       "Time_(h)": hour}, commit=False)
+                       "Time_(h)": hour,
+                       }, commit=False)
         wandb.log({"Wind_power_(kW)": state[0] * wind_max,
                    "Battery_SOC_(kWh)": state[1] * battery.capacity,
-                   "Time_(h)": hour})
+                   "Time_(h)": hour,
+                   })
 
         for i in tqdm(range(iters)):
 
@@ -99,16 +101,19 @@ def run(cfg: DictConfig) -> None:
                 hour += 1
             for u in range(cfg.dac.num_units):
                 wandb.log({f"DAC_{u + 1}_loading_(kg)": state[2 + u] * dac.q_CO2_eq["ad"],
-                           "Time_(h)": hour}, commit=False)
+                           "Time_(h)": hour,
+                           }, commit=False)
             wandb.log({"Wind_power_(kW)": state[0] * wind_max,
-                       "DAC power_(kW)": dac_power,
+                       "DAC_power_(kW)": dac_power,
                        "Battery_SOC_(kWh)": state[1] * battery.capacity,
                        "CO2_captured_(kg)": dac.CO2_captured,
-                       "Time_(h)": hour})
+                       "Time_(h)": hour,
+                       })
             total_co2_captured += dac.CO2_captured
 
         wandb.log({"CO2_rate_(kg/h)": total_co2_captured / cfg.T,
-                   "CO2_rate_(ton/yr)": total_co2_captured / cfg.T / 1e3 * 24 * 365})
+                   "CO2_rate_(ton/yr)": total_co2_captured / cfg.T / 1e3 * 24 * 365,
+                   })
         if "geometry" in cfg.dac_sizing:
             wandb.log({"Productivity_(kg/h/m^3)": total_co2_captured / cfg.T /
                                        cfg.dac_sizing.geometry.unit_volume})
