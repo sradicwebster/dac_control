@@ -71,12 +71,15 @@ class DACEnv(gym.Env):
             power_deficit = dac_power - wind_power - battery_discharge
 
         battery_power = self.dac_power - wind_power
+        prev_controls = self.state[self.dac.num_units + 2:]
         self.state = np.concatenate((wind_power / self.wind_max,
                                      self.battery.step(battery_power).flatten(),
                                      self.dac.step(controls).flatten(),
                                      controls,
                                      ))
-        reward = self.dac.CO2_captured.item() / 1e3
+        start_desorb = np.logical_and(prev_controls != -1, controls == -1).sum()
+        reward = self.dac.CO2_captured.item() / 1e3 - self.cfg.desorb_pen * start_desorb
+
         self.i += 1
         done = False
         if self.i == len(self.wind_power_series)-1:

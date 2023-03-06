@@ -3,11 +3,13 @@ defaults:
   - kinetics: linear
   - dac_sizing: co2_rate
   - battery: default
-  - controller: rule
+  - controller: loading
 
 seed: 1
 dt: 20
 T: 168
+wind_var: 0
+wind_max: False
 dac:
   _target_: models.dac.DAC
   num_units: 2

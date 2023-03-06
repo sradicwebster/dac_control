@@ -23,6 +23,13 @@ def run(cfg: DictConfig) -> None:
 
         wind_power_series = load_wind_data(cfg.dt)
         wind_max = wind_power_series.max()
+        if cfg.wind_max:
+            wind_power_series = wind_max * np.ones_like(wind_power_series)
+
+        iter_per_hour = 60 / cfg.dt
+        iters = int(cfg.T * iter_per_hour)
+        assert iters < len(wind_power_series)
+
         dac = instantiate(cfg.dac,
                           process_conditions=cfg.process_conditions,
                           dac_sizing_cfg=cfg.dac_sizing,
@@ -48,8 +55,9 @@ def run(cfg: DictConfig) -> None:
                                 dac.reset().flatten(),
                                 np.zeros(dac.num_units),
                                 ))
-        hour = 0
 
+        hour = 0
+        total_co2_captured = 0
         wandb.config.CO2_per_cycle_kg = dac.q_CO2_eq["ad"] - dac.q_CO2_eq["de"]
         for u in range(cfg.dac.num_units):
             wandb.log({f"dac_{u + 1}_loading": state[2 + u] * dac.q_CO2_eq["ad"],
@@ -57,10 +65,6 @@ def run(cfg: DictConfig) -> None:
         wandb.log({"wind_power": state[0] * wind_max, "battery_soc": state[1] * battery.capacity,
                    "time (h)": hour})
 
-        iter_per_hour = 60 / cfg.dt
-        iters = int(cfg.T * iter_per_hour)
-        assert iters < len(wind_power_series)
-        total_co2_captured = 0
         for i in tqdm(range(iters)):
 
             controls = controller.policy(state)
@@ -82,6 +86,7 @@ def run(cfg: DictConfig) -> None:
                 power_deficit = dac_power - wind_power - battery_discharge
 
             battery_power = dac_power - wind_power
+
             state = np.concatenate((wind_power / wind_max,
                                     battery.step(battery_power).flatten(),
                                     dac.step(controls).flatten(),

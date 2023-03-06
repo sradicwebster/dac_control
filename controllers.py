@@ -40,6 +40,30 @@ class LoadingRule(BaseController):
         return mode
 
 
+class UnitCyclingRule(BaseController):
+    def __init__(self,
+                 num_units: int,
+                 dt: int,
+                 regen_time: int,
+                 max_cycles: int,
+                 ):
+        self.num_units = num_units
+        self.unit_ops = np.array_split(np.arange(num_units), max_cycles)
+        self.regen_steps = np.ceil(regen_time / dt).astype(int)
+        self.unit_op = 0
+        self.step = 0
+
+    def policy(self,
+               state: np.ndarray,
+               ) -> np.ndarray:
+        controls = np.ones(self.num_units)
+        controls[self.unit_ops[self.unit_op]] *= -1
+        self.step += 1
+        if self.step == self.regen_steps:
+            self.unit_op = (self.unit_op + 1) % len(self.unit_ops)
+        return controls
+
+
 class DiscreteCEM(BaseController):
     def __init__(self,
                  model,

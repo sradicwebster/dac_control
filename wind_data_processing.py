@@ -4,13 +4,13 @@ import pandas as pd
 import argparse
 
 
-def load_wind_data(dt):
+def load_wind_data(dt: int, var: float = 0):
     wind_file = f"wind_power_dt{dt}_var0.npy"
     if wind_file in os.listdir("data"):
         wind_power_series = np.load(os.path.join("data", wind_file))
     else:
         power = np.load("data/wind_power_1year.npy")
-        wind_power_series = power_interpolation(power, dt)
+        wind_power_series = power_interpolation(power, dt, var)
         np.save(os.path.join("../data", wind_file), wind_power_series)
     return wind_power_series.reshape(-1, 1)
 

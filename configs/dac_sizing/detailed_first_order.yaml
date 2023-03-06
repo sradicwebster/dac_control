@@ -4,7 +4,7 @@ process_conditions: ${process_conditions}
 v_air: 0.15
 P_heater: 5000
 geometry:
-  unit_volume: 112.5
+  unit_volume: 200
   void_frac: 0.6
   ri: 0.005
   ro: 0.00505
