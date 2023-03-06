@@ -1,0 +1,18 @@
+program: system_simulation.py
+project: dac_system
+method: grid
+name: num_units
+metric:
+  goal: maximize
+  name: CO2_rate_(kg/h)
+
+parameters:
+
+  dac.num_units:
+    values: [1, 2, 3, 4, 5, 6]
+
+command:
+  - ${env}
+  - python
+  - ${program}
+  - ${args_no_hyphens}

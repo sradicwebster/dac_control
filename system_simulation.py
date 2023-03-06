@@ -8,6 +8,7 @@ from copy import deepcopy
 
 from wind_data_processing import load_wind_data
 
+OmegaConf.register_new_resolver("eval", eval)
 OmegaConf.register_new_resolver("t90_to_k", lambda t90: np.log(1 / 0.1) / (60 * t90))
 
 
@@ -15,10 +16,10 @@ OmegaConf.register_new_resolver("t90_to_k", lambda t90: np.log(1 / 0.1) / (60 * 
 def run(cfg: DictConfig) -> None:
     np.random.seed(cfg.seed)
 
-    with wandb.init(project='dac_system', config=OmegaConf.to_object(cfg)) as _:
-        wandb.config.update({'kinetics_': cfg.kinetics._target_.split('.')[-1],
-                             'dac_sizing_': cfg.dac_sizing._target_.split('.')[-1],
-                             'controller_': cfg.controller._target_.split('.')[-1],
+    with wandb.init(project="dac_system", config=OmegaConf.to_object(cfg)) as _:
+        wandb.config.update({"kinetics_": cfg.kinetics._target_.split(".")[-1],
+                             "dac_sizing_": cfg.dac_sizing._target_.split(".")[-1],
+                             "controller_": cfg.controller._target_.split(".")[-1],
                              })
 
         wind_power_series = load_wind_data(cfg.dt)
@@ -44,8 +45,8 @@ def run(cfg: DictConfig) -> None:
                                                      wind_power=wind_power_series,
                                                      _recursive_=False)
             controller = instantiate(cfg.controller, model=dynamics_model)
-            wandb.config.update({'dynamics_model_': cfg.dynamics_model._target_.split('.')[-1],
-                                 'wind_model_': cfg.dynamics_model.wind_model._target_.split('.')[-1],
+            wandb.config.update({"dynamics_model_": cfg.dynamics_model._target_.split(".")[-1],
+                                 "wind_model_": cfg.dynamics_model.wind_model._target_.split(".")[-1],
                                  })
         else:
             controller = instantiate(cfg.controller, _recursive_=False)
@@ -58,12 +59,13 @@ def run(cfg: DictConfig) -> None:
 
         hour = 0
         total_co2_captured = 0
-        wandb.config.CO2_per_cycle_kg = dac.q_CO2_eq["ad"] - dac.q_CO2_eq["de"]
+        wandb.config.CO2_per_cycle_kg = dac.num_units * (dac.q_CO2_eq["ad"] - dac.q_CO2_eq["de"])
         for u in range(cfg.dac.num_units):
-            wandb.log({f"dac_{u + 1}_loading": state[2 + u] * dac.q_CO2_eq["ad"],
-                       "time (h)": hour}, commit=False)
-        wandb.log({"wind_power": state[0] * wind_max, "battery_soc": state[1] * battery.capacity,
-                   "time (h)": hour})
+            wandb.log({f"DAC_{u + 1}_loading_(kg)": state[2 + u] * dac.q_CO2_eq["ad"],
+                       "Time_(h)": hour}, commit=False)
+        wandb.log({"Wind_power_(kW)": state[0] * wind_max,
+                   "Battery_SOC_(kWh)": state[1] * battery.capacity,
+                   "Time_(h)": hour})
 
         for i in tqdm(range(iters)):
 
@@ -96,20 +98,20 @@ def run(cfg: DictConfig) -> None:
             if (i + 1) % iter_per_hour == 0:
                 hour += 1
             for u in range(cfg.dac.num_units):
-                wandb.log({f"dac_{u + 1}_loading": state[2 + u] * dac.q_CO2_eq["ad"],
-                           "time (h)": hour}, commit=False)
-            wandb.log({"wind_power": state[0] * wind_max,
-                       "dac_power": dac_power,
-                       "battery_soc": state[1] * battery.capacity,
-                       "co2_captured": dac.CO2_captured,
-                       "time (h)": hour})
+                wandb.log({f"DAC_{u + 1}_loading_(kg)": state[2 + u] * dac.q_CO2_eq["ad"],
+                           "Time_(h)": hour}, commit=False)
+            wandb.log({"Wind_power_(kW)": state[0] * wind_max,
+                       "DAC power_(kW)": dac_power,
+                       "Battery_SOC_(kWh)": state[1] * battery.capacity,
+                       "CO2_captured_(kg)": dac.CO2_captured,
+                       "Time_(h)": hour})
             total_co2_captured += dac.CO2_captured
 
-        wandb.config.update({"co2_rate_kg_h": total_co2_captured / cfg.T,
-                             "co2_rate_ton_yr": total_co2_captured / cfg.T / 1e3 * 24 * 365})
+        wandb.log({"CO2_rate_(kg/h)": total_co2_captured / cfg.T,
+                   "CO2_rate_(ton/yr)": total_co2_captured / cfg.T / 1e3 * 24 * 365})
         if "geometry" in cfg.dac_sizing:
-            wandb.config.update({"prod_kg_h_m3": total_co2_captured / cfg.T /
-                                                 cfg.dac_sizing.geometry.unit_volume})
+            wandb.log({"Productivity_(kg/h/m^3)": total_co2_captured / cfg.T /
+                                       cfg.dac_sizing.geometry.unit_volume})
 
 
 if __name__ == "__main__":

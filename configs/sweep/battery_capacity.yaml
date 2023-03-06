@@ -1,0 +1,18 @@
+program: system_simulation.py
+project: dac_system
+method: grid
+name: battery_capacity
+metric:
+  goal: maximize
+  name: CO2_rate_(kg/h)
+
+parameters:
+
+  battery.capacity:
+    values: [0, 1000, 2000, 3000, 4000, 5000, 6000]
+
+command:
+  - ${env}
+  - python
+  - ${program}
+  - ${args_no_hyphens}
