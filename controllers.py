@@ -48,7 +48,7 @@ class UnitCyclingRule(BaseController):
                  max_cycles: int,
                  ):
         self.num_units = num_units
-        self.unit_ops = np.array_split(np.arange(num_units), max_cycles)
+        self.unit_ops = np.array_split(np.arange(num_units), min(num_units, max_cycles))
         self.regen_steps = np.ceil(regen_time / dt).astype(int)
         self.unit_op = 0
         self.step = 0
@@ -61,6 +61,7 @@ class UnitCyclingRule(BaseController):
         self.step += 1
         if self.step == self.regen_steps:
             self.unit_op = (self.unit_op + 1) % len(self.unit_ops)
+            self.step = 0
         return controls
 
 
