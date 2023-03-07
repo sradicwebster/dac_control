@@ -9,5 +9,4 @@ algorithm:
   gamma: 0.9
   clip_range: 0.1
   target_kl: 0.05
-training_timesteps: 2e5
-desorb_pen: 0
+training_timesteps: 1e5

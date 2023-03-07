@@ -50,5 +50,5 @@ python train_rl_agent.py controller=ppo wind.file="wind_power_train"
 After training the agent, the learnt policy can be evaluated by running:
 
 ```zsh
-python system_simulation.py controller=ppo +wandb_name=WANDB_NAME
+python system_simulation.py controller=ppo +controller.wandb_name=WANDB_NAME
 ```
