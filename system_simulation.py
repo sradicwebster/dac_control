@@ -22,9 +22,9 @@ def run(cfg: DictConfig) -> None:
                              "controller_": cfg.controller._target_.split(".")[-1],
                              })
 
-        wind_power_series = load_wind_data(cfg.dt)
-        wind_max = wind_power_series.max()
-        if cfg.wind_max:
+        wind_power_series = load_wind_data(cfg.wind.file, cfg.dt, cfg.wind.var)
+        wind_max = np.max(wind_power_series)
+        if cfg.wind.max_only:
             wind_power_series = wind_max * np.ones_like(wind_power_series)
 
         iter_per_hour = 60 / cfg.dt

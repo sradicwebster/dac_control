@@ -11,6 +11,7 @@ from stable_baselines3.common.callbacks import BaseCallback
 
 from wind_data_processing import load_wind_data
 
+OmegaConf.register_new_resolver("eval", eval)
 OmegaConf.register_new_resolver("t90_to_k", lambda t90: np.log(1 / 0.1) / (60 * t90))
 
 
@@ -23,11 +24,11 @@ class DACEnv(gym.Env):
                  ):
         super().__init__()
         self.cfg = cfg
-        self.wind_power_series = load_wind_data(cfg.dt)
-        self.wind_max = self.wind_power_series.max()
+        self.wind_power_series = load_wind_data(cfg.wind.file, cfg.dt, cfg.wind.var)
+        self.wind_max = np.max(self.wind_power_series)
         self.dac = instantiate(cfg.dac,
                                process_conditions=cfg.process_conditions,
-                               unit_sizing_cfg=cfg.unit_sizing,
+                               dac_sizing_cfg=cfg.dac_sizing,
                                kinetics_cfg=cfg.kinetics,
                                _recursive_=False)
         self.battery = hydra.utils.instantiate(cfg.battery)
@@ -40,15 +41,19 @@ class DACEnv(gym.Env):
 
         self.state = None
         self.dac_power = None
-        self.i = None
-
-    def reset(self) -> np.ndarray:
         self.i = 0
+        self._reset_state()
+        self.iter_per_hour = 60 / cfg.dt
+        self.hour = 0
+
+    def _reset_state(self) -> None:
         self.state = np.concatenate((self.wind_power_series[self.i] / self.wind_max,
                                      self.battery.reset().flatten(),
                                      self.dac.reset().flatten(),
                                      np.ones(self.dac.num_units),
                                      ))
+
+    def reset(self) -> np.ndarray:
         return self.state
 
     def step(self,
@@ -80,11 +85,21 @@ class DACEnv(gym.Env):
                                      controls,
                                      ))
         start_desorb = np.logical_and(prev_controls != -1, controls == -1).sum()
-        reward = self.dac.CO2_captured.item() / 1e3 - self.cfg.desorb_pen * start_desorb
+        desorb_pen = self.cfg.controller.get("desorb_pen", 0)
+        reward = self.dac.CO2_captured.item() / 1e3 - desorb_pen * start_desorb
 
         self.i += 1
+        if self.i % self.iter_per_hour == 0:
+            self.hour += 1
+
         done = False
+        if self.hour % (24 * 7) == 0:
+            done = True
         if self.i == len(self.wind_power_series)-1:
+            self.wind_power_series = load_wind_data(self.cfg.wind.file, self.cfg.dt,
+                                                    self.cfg.wind.var)
+            self._reset_state()
+            self.i = 0
             done = True
 
         return self.state, reward, done, {}
