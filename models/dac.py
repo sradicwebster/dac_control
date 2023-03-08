@@ -92,7 +92,7 @@ class DAC:
         q_CO2_next = self.kinetics.step(mode, "CO2", self.q_CO2, t_desorb)
         q_H2O_next = self.kinetics.step(mode, "H2O", self.q_H2O, t_desorb)
         power = self.dac_sizing.power_requirement(mode, self.q_CO2, self.q_H2O, q_CO2_next,
-                                                  q_H2O_next, self.T_units)
+                                                  q_H2O_next, self.T_units, T_units_next)
         if update_state:
             self.CO2_captured = np.maximum(self.q_CO2 - q_CO2_next, 0.0).sum(axis=1)
             self.q_CO2 = q_CO2_next

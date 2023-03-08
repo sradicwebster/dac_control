@@ -45,9 +45,7 @@ class Linear(BaseKinetics):
                  q_CO2_eq: DictConfig,
                  q_H2O_eq: DictConfig,
                  m_sorbent: float,
-                 max_adsorption_rate: float,
-                 ambient_adsorption_rate: float,
-                 desorption_rate: float,
+                 rates: DictConfig,
                  ) -> None:
         """ Linear kinetics
 
@@ -55,15 +53,10 @@ class Linear(BaseKinetics):
             dt (int): time step (mins)
             q_CO2_eq (DictConfig): adsorption and desorption CO2 equilibrium loading per unit (kg)
             q_H2O_eq (DictConfig): adsorption and desorption H2O equilibrium loading per unit (kg)
-            max_adsorption_rate (float): adsorption rate of CO2 with fan on (mol_CO2/kg_sorbent/h)
-            ambient_adsorption_rate (float): adsorption rate of CO2 with fan off
-                (mol_CO2/kg_sorbent/h)
-            desorption_rate (float): desorption rate of CO2 (mol_CO2/kg_sorbent/h)
+            rates (DictConfig): adsorption and desorption rates for CO2 and H2O (mol/kg_sorbent/h)
         """
         super().__init__(dt, q_CO2_eq, q_H2O_eq, m_sorbent)
-        self.max_ad_rate = max_adsorption_rate
-        self.amb_ad_rate = ambient_adsorption_rate
-        self.de_rate = desorption_rate
+        self.rates = rates
 
     def step(self,
              mode: np.ndarray,
@@ -75,7 +68,7 @@ class Linear(BaseKinetics):
 
         Args:
             mode (np.ndarray): DAC unit mode of operation
-            comp (str): componet, either 'CO2' or 'H2O'
+            comp (str): component, either 'CO2' or 'H2O'
             q_i (np.ndarray): initial loading as an array with shape number of experiment x number
                 of DAC units
             t_desorb (np.ndarray): time to desorb
@@ -86,8 +79,10 @@ class Linear(BaseKinetics):
 
         """
         M_CO2 = 0.044009
-        adsorb_rate = np.select([mode < 0, mode == 0, mode > 0],
-                                [-self.de_rate, self.amb_ad_rate, self.max_ad_rate]) \
+        adsorb_rate = np.select([mode == -1, mode == 0, mode == 1],
+                                [-self.rates[comp]["de"],
+                                 self.rates[comp]["ad_amb"],
+                                 self.rates[comp]["ad_max"]]) \
                       * M_CO2 * self.m_sorbent
         adsorbed = adsorb_rate * np.where(mode == -1, t_desorb, self.dt) / 60
         new_q = np.clip(q_i + adsorbed, self.q_eq[comp]["de"], self.q_eq[comp]["ad"])
@@ -143,7 +138,7 @@ class FirstOrder(BaseKinetics):
 
         """
         time = np.where(mode == -1, t_desorb, self.dt) * 60
-        new_q = np.select([mode < 0, mode == 0, mode > 0],
+        new_q = np.select([mode == -1, mode == 0, mode == 1],
                           [self._ode_sol(q_i, self.q_eq[comp]["de"], self.k[comp]["de"], time),
                            self._ode_sol(q_i, self.q_eq[comp]["ad"], self.k[comp]["ad_amb"], time),
                            self._ode_sol(q_i, self.q_eq[comp]["ad"], self.k[comp]["ad_max"], time)])

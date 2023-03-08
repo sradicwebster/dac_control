@@ -1,5 +1,11 @@
 _target_: models.kinetics.Linear
 dt: ${dt}
-max_adsorption_rate: 1.0
-ambient_adsorption_rate: 0.5
-desorption_rate: 2.0
+rates:
+  CO2:
+    ad_max: 1.0
+    ad_amb: 0.5
+    de: 2.0
+  H2O:
+    ad_max: 2.0
+    ad_amb: 1.0
+    de: 4.0

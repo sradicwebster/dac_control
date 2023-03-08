@@ -3,4 +3,4 @@ dt: ${dt}
 process_conditions: ${process_conditions}
 CO2_per_cycle: 2000
 fan_power: 2000
-desorption_power: 8000
+desorption_power: 4000

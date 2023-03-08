@@ -2,8 +2,10 @@ _target_: models.kinetics.FirstOrder
 dt: ${dt}
 k:
   CO2:
-    ad: 0.0002
+    ad_max: 0.0002
+    ad_amb: 0.0001
     de: 0.001
   H2O:
-    ad: 0.001
+    ad_max: 0.001
+    ad_amb: 0.0005
     de: 0.002

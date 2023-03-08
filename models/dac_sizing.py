@@ -15,7 +15,6 @@ class BaseSizing:
         self.dt = dt
         self.q_CO2_eq = q_CO2_eq
         self.process_conditions = process_conditions,
-        # for some reason process_conditions is being turned into a tuple
         if isinstance(self.process_conditions, tuple):
             self.process_conditions = self.process_conditions[0]
         self.M_CO2 = 0.044009
@@ -40,6 +39,7 @@ class BaseSizing:
                           q_CO2_next: np.ndarray,
                           q_H2O_next: np.ndarray,
                           T_units: np.ndarray,
+                          T_units_next: np.ndarray,
                           ) -> np.ndarray:
         pass
 
@@ -77,6 +77,7 @@ class CO2Rate(BaseSizing):
                           q_CO2_next: np.ndarray,
                           q_H2O_next: np.ndarray,
                           T_units: np.ndarray,
+                          T_units_next: np.ndarray,
                           ) -> np.ndarray:
         power = np.select([mode < 0, mode == 0, mode > 0],
                           [self.desorption_power, 0.0, self.fan_power])
@@ -133,13 +134,13 @@ class Detailed(BaseSizing):
                           ) -> Tuple[np.ndarray, np.ndarray]:
         cp_al = 0.91
         E_skel = cp_al * self.m_skel * (self.T_de - T)
-        E_sen = self._sensible_heat(T, q_CO2, q_H2O)
+        E_sen = self._sensible_heat(T, self.T_de, q_CO2, q_H2O)
         P_skel = E_skel / (E_sen + 1e-10) * self.P_heater
         T_next = np.where(mode == -1, T + P_skel * self.dt * 60 / (cp_al * self.m_skel), self.T_ad)
-        t_de = np.where(mode == -1,
-                        self.dt - cp_al * self.m_skel * (T_next - self.T_de) / ((P_skel + 1e-10) * 60),
-                        0)
         T_next = np.minimum(T_next, self.T_de)
+        t_de = np.where(mode == -1,
+                        self.dt - cp_al * self.m_skel * (T_next - T) / ((P_skel + 1e-10) * 60),
+                        0)
         return T_next, t_de
 
     def power_requirement(self,
@@ -149,11 +150,10 @@ class Detailed(BaseSizing):
                           q_CO2_next: np.ndarray,
                           q_H2O_next: np.ndarray,
                           T_units: np.ndarray,
+                          T_units_next: np.ndarray,
                           ) -> np.ndarray:
         E_de = self._heat_of_reaction(q_CO2 - q_CO2_next, q_H2O - q_H2O_next) + \
-               self._sensible_heat(T_units, q_CO2, q_H2O)
-        # TODO what to do when P_de > P_heater?
-        #P_de = np.minimum(E_de / (60 * self.dt), self.P_heater)
+               self._sensible_heat(T_units, T_units_next, q_CO2, q_H2O)
         P_de = E_de / (60 * self.dt)
         return np.select([mode < 0, mode == 0, mode > 0], [P_de, 0.0, self.P_ad])
 
@@ -184,18 +184,18 @@ class Detailed(BaseSizing):
         fan_eff = 0.6
         return deltaP * Q / (fan_eff * 1000)
 
-    def _sensible_heat(self, T, q_CO2, q_H2O):
+    def _sensible_heat(self, T, T_next, q_CO2, q_H2O):
         cp_sorbent = 1.58
         cp_co2 = (0.819 + 0.918) / 2
         cp_water = 4.2
         cp_steam = 1.93
         cp_al = 0.91
         T_bp = 80
-        E_sorb = cp_sorbent * self.m_sorbent * (self.T_de - T)
-        E_skel = cp_al * self.m_skel * (self.T_de - T)
-        E_co2 = cp_co2 * q_CO2 * (self.T_de - T)
+        E_sorb = cp_sorbent * self.m_sorbent * (T_next - T)
+        E_skel = cp_al * self.m_skel * (T_next - T)
+        E_co2 = cp_co2 * q_CO2 * (T_next - T)
         E_water = cp_water * q_H2O * np.maximum(T_bp - T, 0)
-        E_steam = cp_steam * q_H2O * (self.T_de - np.maximum(T_bp, T))
+        E_steam = cp_steam * q_H2O * (T_next - np.maximum(T_bp, T))
         return E_sorb + E_skel + E_co2 + E_water + E_steam
 
     def _heat_of_reaction(self, dq_CO2, dq_H2O):

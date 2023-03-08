@@ -7,6 +7,12 @@ tb_log/
 trained_agents/
 models/old_dac.py
 plotting.py
+/data
+!data/co2_isotherm_data.csv
+!data/h20_isotherm_data.csv
+!data/sorbent_properties.csv
+!data/wind_power_sim.npy
+!data/wind_power_train.npy
 
 
 # Byte-compiled / optimized / DLL files
