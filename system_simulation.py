@@ -52,14 +52,16 @@ def run(cfg: DictConfig) -> None:
         else:
             controller = instantiate(cfg.controller, _recursive_=False)
 
+        prev_controls = np.zeros(dac.num_units)
         state = np.concatenate((wind_power_series[0] / wind_max,
                                 battery.reset().flatten(),
                                 dac.reset().flatten(),
-                                np.zeros(dac.num_units)))
+                                prev_controls))
 
         hour = 0
         wind_utilisation = 0
         total_co2_captured = 0
+        desorptions = 0
         wandb.config.CO2_per_cycle_kg = dac.num_units * (dac.m_CO2_eq["ad"] - dac.m_CO2_eq["de"])
         if "geometry" in cfg.sizing:
             wandb.config.sizing.update({"geometry": {"volume": dac.sizing.geometry.volume}})
@@ -112,13 +114,20 @@ def run(cfg: DictConfig) -> None:
             total_co2_captured += dac.CO2_captured
             if wind_power != 0:
                 wind_utilisation += (dac_power - battery_power) / wind_power
+            desorptions += np.logical_and(prev_controls != -1, controls == -1).sum()
+            prev_controls = controls
 
         co2_per_hour = total_co2_captured / (iters / iter_per_hour)
-        wandb.log({"CO2_rate_(kg/h)": co2_per_hour,
-                   "CO2_rate_(ton/yr)": co2_per_hour / 1e3 * 24 * 365,
-                   "wind_utilisation": wind_utilisation / iters})
+        wandb.log({"Performance":
+                       {"CO2_rate_(kg/h)": co2_per_hour,
+                        "CO2_rate_(ton/yr)": co2_per_hour / 1e3 * 24 * 365,
+                        "wind_utilisation": wind_utilisation / iters,
+                        "desorption_rate": desorptions / (dac.num_units * iters / iter_per_hour)},
+                   })
         if "geometry" in cfg.sizing:
-            wandb.log({"Productivity_(kg/h/m^3)": co2_per_hour / dac.sizing.geometry.volume})
+            wandb.log({"Performance":
+                           {"Productivity_(kg/h/m^3)": co2_per_hour / dac.sizing.geometry.volume},
+                       })
 
 
 if __name__ == "__main__":
