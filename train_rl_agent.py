@@ -28,7 +28,7 @@ class DACEnv(gym.Env):
         self.wind_max = np.max(self.wind_power_series)
         self.dac = instantiate(cfg.dac,
                                process_conditions=cfg.process_conditions,
-                               dac_sizing_cfg=cfg.dac_sizing,
+                               sizing_cfg=cfg.sizing,
                                kinetics_cfg=cfg.kinetics,
                                _recursive_=False)
         self.battery = hydra.utils.instantiate(cfg.battery)

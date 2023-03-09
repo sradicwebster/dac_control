@@ -1,4 +1,4 @@
-_target_: models.dac_sizing.CO2Rate
+_target_: models.sizing.ConstantPower
 dt: ${dt}
 process_conditions: ${process_conditions}
 CO2_per_cycle: ${eval:4000 / ${dac.num_units}}

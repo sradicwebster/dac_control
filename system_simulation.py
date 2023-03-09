@@ -18,7 +18,7 @@ def run(cfg: DictConfig) -> None:
 
     with wandb.init(project="dac_system", config=OmegaConf.to_object(cfg)) as _:
         wandb.config.update({"kinetics_": cfg.kinetics._target_.split(".")[-1],
-                             "dac_sizing_": cfg.dac_sizing._target_.split(".")[-1],
+                             "sizing_": cfg.sizing._target_.split(".")[-1],
                              "controller_": cfg.controller._target_.split(".")[-1],
                              })
 
@@ -33,7 +33,7 @@ def run(cfg: DictConfig) -> None:
 
         dac = instantiate(cfg.dac,
                           process_conditions=cfg.process_conditions,
-                          dac_sizing_cfg=cfg.dac_sizing,
+                          sizing_cfg=cfg.sizing,
                           kinetics_cfg=cfg.kinetics,
                           _recursive_=False)
         battery = hydra.utils.instantiate(cfg.battery)
@@ -60,6 +60,8 @@ def run(cfg: DictConfig) -> None:
         hour = 0
         total_co2_captured = 0
         wandb.config.CO2_per_cycle_kg = dac.num_units * (dac.q_CO2_eq["ad"] - dac.q_CO2_eq["de"])
+        if "geometry" in cfg.sizing:
+            wandb.config.sizing.update({"geometry": {"volume": dac.sizing.geometry.volume}})
         for u in range(cfg.dac.num_units):
             wandb.log({f"DAC_{u + 1}_loading_(kg)": state[2 + u] * dac.q_CO2_eq["ad"],
                        "Time_(h)": hour,
@@ -114,9 +116,9 @@ def run(cfg: DictConfig) -> None:
         wandb.log({"CO2_rate_(kg/h)": total_co2_captured / cfg.T,
                    "CO2_rate_(ton/yr)": total_co2_captured / cfg.T / 1e3 * 24 * 365,
                    })
-        if "geometry" in cfg.dac_sizing:
+        if "geometry" in cfg.sizing:
             wandb.log({"Productivity_(kg/h/m^3)": total_co2_captured / cfg.T /
-                                       cfg.dac_sizing.geometry.unit_volume})
+                                       cfg.sizing.geometry.volume})
 
 
 if __name__ == "__main__":

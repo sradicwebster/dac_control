@@ -4,7 +4,7 @@ method: grid
 name: cem_params
 metric:
   goal: maximize
-  name: co2_rate_kg_h
+  name: CO2_rate_(kg/h)
 
 parameters:
 
