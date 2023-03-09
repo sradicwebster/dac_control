@@ -6,7 +6,7 @@ defaults:
   - controller: loading
 
 seed: 1
-dt: 20
+dt: 15
 T: 168
 wind:
   file: "wind_power_sim"

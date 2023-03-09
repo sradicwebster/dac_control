@@ -19,8 +19,7 @@ def run(cfg: DictConfig) -> None:
     with wandb.init(project="dac_system", config=OmegaConf.to_object(cfg)) as _:
         wandb.config.update({"kinetics_": cfg.kinetics._target_.split(".")[-1],
                              "sizing_": cfg.sizing._target_.split(".")[-1],
-                             "controller_": cfg.controller._target_.split(".")[-1],
-                             })
+                             "controller_": cfg.controller._target_.split(".")[-1]})
 
         wind_power_series = load_wind_data(cfg.wind.file, cfg.dt, cfg.wind.var)
         wind_max = np.max(wind_power_series)
@@ -28,7 +27,10 @@ def run(cfg: DictConfig) -> None:
             wind_power_series = wind_max * np.ones_like(wind_power_series)
 
         iter_per_hour = 60 / cfg.dt
-        iters = int(cfg.T * iter_per_hour)
+        if cfg.T != -1:
+            iters = int(cfg.T * iter_per_hour)
+        else:
+            iters = len(wind_power_series) - 1
         assert iters < len(wind_power_series)
 
         dac = instantiate(cfg.dac,
@@ -54,8 +56,7 @@ def run(cfg: DictConfig) -> None:
         state = np.concatenate((wind_power_series[0] / wind_max,
                                 battery.reset().flatten(),
                                 dac.reset().flatten(),
-                                np.zeros(dac.num_units),
-                                ))
+                                np.zeros(dac.num_units)))
 
         hour = 0
         total_co2_captured = 0
@@ -68,8 +69,7 @@ def run(cfg: DictConfig) -> None:
                        }, commit=False)
         wandb.log({"Wind_power_(kW)": state[0] * wind_max,
                    "Battery_SOC_(kWh)": state[1] * battery.capacity,
-                   "Time_(h)": hour,
-                   })
+                   "Time_(h)": hour})
 
         for i in tqdm(range(iters)):
 
@@ -96,8 +96,7 @@ def run(cfg: DictConfig) -> None:
             state = np.concatenate((wind_power / wind_max,
                                     battery.step(battery_power).flatten(),
                                     dac.step(controls).flatten(),
-                                    controls,
-                                    ))
+                                    controls))
 
             if (i + 1) % iter_per_hour == 0:
                 hour += 1
@@ -109,16 +108,14 @@ def run(cfg: DictConfig) -> None:
                        "DAC_power_(kW)": dac_power,
                        "Battery_SOC_(kWh)": state[1] * battery.capacity,
                        "CO2_captured_(kg)": dac.CO2_captured,
-                       "Time_(h)": hour,
-                       })
+                       "Time_(h)": hour})
             total_co2_captured += dac.CO2_captured
 
-        wandb.log({"CO2_rate_(kg/h)": total_co2_captured / cfg.T,
-                   "CO2_rate_(ton/yr)": total_co2_captured / cfg.T / 1e3 * 24 * 365,
-                   })
+        co2_per_hour = total_co2_captured / (iters / iter_per_hour)
+        wandb.log({"CO2_rate_(kg/h)": co2_per_hour,
+                   "CO2_rate_(ton/yr)": co2_per_hour / 1e3 * 24 * 365})
         if "geometry" in cfg.sizing:
-            wandb.log({"Productivity_(kg/h/m^3)": total_co2_captured / cfg.T /
-                                       cfg.sizing.geometry.volume})
+            wandb.log({"Productivity_(kg/h/m^3)": co2_per_hour / cfg.sizing.geometry.volume})
 
 
 if __name__ == "__main__":

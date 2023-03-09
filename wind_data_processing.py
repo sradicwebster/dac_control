@@ -22,7 +22,7 @@ def load_wind_data(file: str,
     if wind_file in os.listdir("data"):
         wind_power_series = np.load(os.path.join("data", wind_file))
     else:
-        power = np.load(f"data/{file}.npy")
+        power = np.load(f"data/{file}.npy", allow_pickle=True)
         wind_power_series = power_interpolation(power, dt, var)
         np.save(os.path.join("data", wind_file), wind_power_series)
     return wind_power_series.reshape(-1, 1)
