@@ -24,8 +24,8 @@ class BaseSizing:
     def temps_desorb_time(self,
                           mode: np.ndarray,
                           T: np.ndarray,
-                          q_CO2: np.ndarray,
-                          q_H2O: np.ndarray,
+                          m_CO2: np.ndarray,
+                          m_H2O: np.ndarray,
                           ) -> Tuple[np.ndarray, np.ndarray]:
         T_next = np.where(mode == -1,
                           self.process_conditions["T_de"],
@@ -35,10 +35,10 @@ class BaseSizing:
 
     def power_requirement(self,
                           mode: np.ndarray,
-                          q_CO2: np.ndarray,
-                          q_H2O: np.ndarray,
-                          q_CO2_next: np.ndarray,
-                          q_H2O_next: np.ndarray,
+                          m_CO2: np.ndarray,
+                          m_H2O: np.ndarray,
+                          m_CO2_next: np.ndarray,
+                          m_H2O_next: np.ndarray,
                           T_units: np.ndarray,
                           T_units_next: np.ndarray,
                           ) -> np.ndarray:
@@ -58,7 +58,7 @@ class ConstantPower(BaseSizing):
         """
 
         Args:
-            q_CO2_eq: adsorption and desorption CO2 equilibrium loading (mol_CO2 / kg_sorbent)
+            q_CO2_eq: adsorption and desorption CO2 equilibrium loading (mol_CO2/kg_sorbent)
             CO2_per_cycle: CO2 captured for an adsorption desorption cycle per unit (kg_CO2)
             fan_power: power requirement of air blower per unit (kW)
             desorption_power: power requirement of desorption per unit (kW)
@@ -72,10 +72,10 @@ class ConstantPower(BaseSizing):
 
     def power_requirement(self,
                           mode: np.ndarray,
-                          q_CO2: np.ndarray,
-                          q_H2O: np.ndarray,
-                          q_CO2_next: np.ndarray,
-                          q_H2O_next: np.ndarray,
+                          m_CO2: np.ndarray,
+                          m_H2O: np.ndarray,
+                          m_CO2_next: np.ndarray,
+                          m_H2O_next: np.ndarray,
                           T_units: np.ndarray,
                           T_units_next: np.ndarray,
                           ) -> np.ndarray:
@@ -122,6 +122,8 @@ class Detailed(BaseSizing):
         else:
             self.m_sorbent = self._sorbent_mass_from_geometry(geometry)
         self.Q = self._air_flow_rate(self.m_sorbent)
+
+        # TODO sort out this mess
         deltaP_honey = self._pressure_drop_honeycomb(self.Q, geometry)
         deltaP_packed = self._pressure_drop_packed_bed(self.Q, 0.02)
         P_ad_honey = self._fan_power(deltaP_honey, self.Q)
@@ -156,11 +158,11 @@ class Detailed(BaseSizing):
     def temps_desorb_time(self,
                           mode: np.ndarray,
                           T: np.ndarray,
-                          q_CO2: np.ndarray,
-                          q_H2O: np.ndarray,
+                          m_CO2: np.ndarray,
+                          m_H2O: np.ndarray,
                           ) -> Tuple[np.ndarray, np.ndarray]:
         cp_sorb = self.prop["cp_s"] * 1e-3
-        E_sen = self._sensible_heat(T, self.T_de, q_CO2, q_H2O)
+        E_sen = self._sensible_heat(T, self.T_de, m_CO2, m_H2O)
         E_sorb = cp_sorb * self.m_sorbent * (self.T_de - T)
         P_sorb = E_sorb / (E_sen + 1e-10) * self.P_heater
         heat_temp = T + P_sorb * self.dt * 60 / (cp_sorb * self.m_sorbent)
@@ -172,15 +174,15 @@ class Detailed(BaseSizing):
 
     def power_requirement(self,
                           mode: np.ndarray,
-                          q_CO2: np.ndarray,
-                          q_H2O: np.ndarray,
-                          q_CO2_next: np.ndarray,
-                          q_H2O_next: np.ndarray,
+                          m_CO2: np.ndarray,
+                          m_H2O: np.ndarray,
+                          m_CO2_next: np.ndarray,
+                          m_H2O_next: np.ndarray,
                           T_units: np.ndarray,
                           T_units_next: np.ndarray,
                           ) -> np.ndarray:
-        E_de = self._heat_of_reaction(q_CO2 - q_CO2_next, q_H2O - q_H2O_next) + \
-               self._sensible_heat(T_units, T_units_next, q_CO2, q_H2O)
+        E_de = self._heat_of_reaction(m_CO2 - m_CO2_next, m_H2O - m_H2O_next) + \
+               self._sensible_heat(T_units, T_units_next, m_CO2, m_H2O)
         P_de = E_de / (60 * self.dt)
         return np.select([mode == -1, mode == 0, mode == 1], [P_de, 0.0, self.P_ad])
 
@@ -220,20 +222,20 @@ class Detailed(BaseSizing):
     def _fan_power(self, deltaP, Q, eff=0.6):
         return deltaP * Q / (eff * 1000)
 
-    def _sensible_heat(self, T, T_next, q_CO2, q_H2O):
+    def _sensible_heat(self, T, T_next, m_CO2, m_H2O):
         cp_co2 = (0.819 + 0.918) / 2
         cp_water = 4.2
         cp_steam = 1.93
         T_bp = 80
         E_sorb = self.prop["cp_s"] * 1e-3 * self.m_sorbent * (T_next - T)
-        E_co2 = cp_co2 * q_CO2 * (T_next - T)
-        E_water = cp_water * q_H2O * np.maximum(T_bp - T, 0)
-        E_steam = cp_steam * q_H2O * (T_next - np.maximum(T_bp, T))
+        E_co2 = cp_co2 * m_CO2 * (T_next - T)
+        E_water = cp_water * m_H2O * np.maximum(T_bp - T, 0)
+        E_steam = cp_steam * m_H2O * (T_next - np.maximum(T_bp, T))
         return E_sorb + E_co2 + E_water + E_steam
 
-    def _heat_of_reaction(self, dq_CO2, dq_H2O):
-        E_co2reac = self.prop["dH_co2"] * dq_CO2 / self.M_CO2
-        E_h2oreac = self.prop["dH_h2o"] * dq_H2O / self.M_H2O
+    def _heat_of_reaction(self, dm_CO2, dm_H2O):
+        E_co2reac = self.prop["dH_co2"] * dm_CO2 / self.M_CO2
+        E_h2oreac = self.prop["dH_h2o"] * dm_H2O / self.M_H2O
         return E_co2reac + E_h2oreac
 
 

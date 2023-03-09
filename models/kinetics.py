@@ -10,11 +10,16 @@ class BaseKinetics:
                  dt: int,
                  q_CO2_eq: DictConfig,
                  q_H2O_eq: DictConfig,
-                 m_sorbent: float,
                  ) -> None:
+        """
+
+        Args:
+            dt (int): time step (min)
+            q_CO2_eq (DictConfig): CO2 equilibrium loadings
+            q_H2O_eq (DictConfig): H2O equilibrium loadings
+        """
         self.dt = dt
         self.q_eq = {"CO2": q_CO2_eq, "H2O": q_H2O_eq}
-        self.m_sorbent = m_sorbent
 
     def step(self,
              mode: np.ndarray,
@@ -44,18 +49,19 @@ class Linear(BaseKinetics):
                  dt: int,
                  q_CO2_eq: DictConfig,
                  q_H2O_eq: DictConfig,
-                 m_sorbent: float,
                  rates: DictConfig,
                  ) -> None:
         """ Linear kinetics
 
         Args:
-            dt (int): time step (mins)
-            q_CO2_eq (DictConfig): adsorption and desorption CO2 equilibrium loading per unit (kg)
-            q_H2O_eq (DictConfig): adsorption and desorption H2O equilibrium loading per unit (kg)
+            dt (int): time step (min)
+            q_CO2_eq (DictConfig): adsorption and desorption CO2 equilibrium loading per unit
+                (mol_CO2/kg_sorbent)
+            q_H2O_eq (DictConfig): adsorption and desorption H2O equilibrium loading per unit
+                (mol_H2O/kg_sorbent)
             rates (DictConfig): adsorption and desorption rates for CO2 and H2O (mol/kg_sorbent/h)
         """
-        super().__init__(dt, q_CO2_eq, q_H2O_eq, m_sorbent)
+        super().__init__(dt, q_CO2_eq, q_H2O_eq)
         self.rates = rates
 
     def step(self,
@@ -78,12 +84,10 @@ class Linear(BaseKinetics):
                 of DAC units
 
         """
-        M_CO2 = 0.044009
         adsorb_rate = np.select([mode == -1, mode == 0, mode == 1],
                                 [-self.rates[comp]["de"],
                                  self.rates[comp]["ad_amb"],
-                                 self.rates[comp]["ad_max"]]) \
-                      * M_CO2 * self.m_sorbent
+                                 self.rates[comp]["ad_max"]])
         adsorbed = adsorb_rate * np.where(mode == -1, t_desorb, self.dt) / 60
         new_q = np.clip(q_i + adsorbed, self.q_eq[comp]["de"], self.q_eq[comp]["ad"])
         return new_q
@@ -94,7 +98,6 @@ class FirstOrder(BaseKinetics):
                  dt: int,
                  q_CO2_eq: DictConfig,
                  q_H2O_eq: DictConfig,
-                 m_sorbent: float,
                  k: DictConfig,
                  ):
         """ First order kinetics as described by the linear driving force (LDF) model
@@ -103,10 +106,9 @@ class FirstOrder(BaseKinetics):
             dt (int): time step (mins)
             q_CO2_eq (DictConfig): equilibrium loading (mol_CO2/kg_sorbent)
             q_H2O_eq (DictConfig): equilibrium loading (mol_H2O/kg_sorbent)
-            m_sorbent (float): mass of sorbent (kg)
             k (DictConfig): rate constants (1/s)
         """
-        super().__init__(dt, q_CO2_eq, q_H2O_eq, m_sorbent)
+        super().__init__(dt, q_CO2_eq, q_H2O_eq)
         self.k = k
 
     def _ode_sol(self,

@@ -59,11 +59,11 @@ def run(cfg: DictConfig) -> None:
 
         hour = 0
         total_co2_captured = 0
-        wandb.config.CO2_per_cycle_kg = dac.num_units * (dac.q_CO2_eq["ad"] - dac.q_CO2_eq["de"])
+        wandb.config.CO2_per_cycle_kg = dac.num_units * (dac.m_CO2_eq["ad"] - dac.m_CO2_eq["de"])
         if "geometry" in cfg.sizing:
             wandb.config.sizing.update({"geometry": {"volume": dac.sizing.geometry.volume}})
         for u in range(cfg.dac.num_units):
-            wandb.log({f"DAC_{u + 1}_loading_(kg)": state[2 + u] * dac.q_CO2_eq["ad"],
+            wandb.log({f"DAC_{u + 1}_loading_(kg)": state[2 + u] * dac.m_CO2_eq["ad"],
                        "Time_(h)": hour,
                        }, commit=False)
         wandb.log({"Wind_power_(kW)": state[0] * wind_max,
@@ -102,7 +102,7 @@ def run(cfg: DictConfig) -> None:
             if (i + 1) % iter_per_hour == 0:
                 hour += 1
             for u in range(cfg.dac.num_units):
-                wandb.log({f"DAC_{u + 1}_loading_(kg)": state[2 + u] * dac.q_CO2_eq["ad"],
+                wandb.log({f"DAC_{u + 1}_loading_(kg)": state[2 + u] * dac.m_CO2_eq["ad"],
                            "Time_(h)": hour,
                            }, commit=False)
             wandb.log({"Wind_power_(kW)": state[0] * wind_max,

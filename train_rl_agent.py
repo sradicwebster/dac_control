@@ -117,7 +117,7 @@ class WandBLogging(BaseCallback):
     def _on_step(self) -> bool:
         for u in range(self.env.dac.num_units):
             wandb.log({f"DAC_{u + 1}_loading_(kg)": self.env.state[2 + u] *
-                                                    self.env.dac.q_CO2_eq["ad"]}, commit=False)
+                                                    self.env.dac.m_CO2_eq["ad"]}, commit=False)
         wandb.log({"Wind_power_(kW)": self.env.state[0] * self.env.wind_max,
                    "DAC_power_(kW)": self.env.dac_power,
                    "Battery_SOC_(kWh)": self.env.state[1] * self.env.battery.capacity,
