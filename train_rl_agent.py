@@ -24,7 +24,7 @@ class DACEnv(gym.Env):
                  ):
         super().__init__()
         self.cfg = cfg
-        self.wind_power_series = load_wind_data(cfg.wind.file, cfg.dt, cfg.wind.var)
+        self.wind_power_series = load_wind_data("wind_power_train", cfg.dt, cfg.get("wind_var", 0))
         self.wind_max = np.max(self.wind_power_series)
         self.dac = instantiate(cfg.dac,
                                process_conditions=cfg.process_conditions,

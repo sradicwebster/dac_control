@@ -2,8 +2,8 @@ _target_: models.kinetics.FirstOrder
 dt: ${dt}
 k:
   CO2:
-    ad_max: ${t90_to_k:150}
-    ad_amb: ${t90_to_k:300}
+    ad_max: ${t90_to_k:120}
+    ad_amb: ${t90_to_k:240}
     de: ${t90_to_k:60}
   H2O:
     ad_max: ${t90_to_k:60}

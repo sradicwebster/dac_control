@@ -6,12 +6,8 @@ defaults:
   - controller: loading
 
 seed: 1
-dt: 15
+dt: 20
 T: 168
-wind:
-  file: "wind_power_sim"
-  var: 0
-  max_only: False
 dac:
   _target_: models.dac.DAC
   num_units: 2

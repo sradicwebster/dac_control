@@ -16,3 +16,5 @@ command:
   - python
   - ${program}
   - ${args_no_hyphens}
+  - kinetics=first_order_t90
+  - sizing=detailed_first_order

@@ -44,7 +44,7 @@ python system_simulation.py controller=cem +dynamics_model=constant_wind
 A seperate script can be used to train and save a reinforcement learning agent using [Stable-Baselines3](https://stable-baselines3.readthedocs.io/en/master/index.html). 
 
 ```zsh
-python train_rl_agent.py controller=ppo wind.file="wind_power_train"
+python train_rl_agent.py controller=ppo
 ```
 
 After training the agent, the learnt policy can be evaluated by running:

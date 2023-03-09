@@ -1,0 +1,21 @@
+program: train_rl_agent.py
+project: dac_system_rl_train
+method: grid
+name: ppo_desorb_pen
+metric:
+  goal: maximize
+  name: CO2_rate_(kg/h)
+
+parameters:
+
+  controller.desorb_pen:
+    values: [0, 0.2, 0.4, 0.6, 0.8, 1.0]
+
+command:
+  - ${env}
+  - python
+  - ${program}
+  - ${args_no_hyphens}
+  - kinetics=first_order_t90
+  - sizing=detailed_first_order
+  - controller=ppo

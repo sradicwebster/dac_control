@@ -124,9 +124,9 @@ class Detailed(BaseSizing):
         self.Q = self._air_flow_rate(self.m_sorbent)
 
         # TODO sort out this mess
-        deltaP_honey = self._pressure_drop_honeycomb(self.Q, geometry)
+        #deltaP_honey = self._pressure_drop_honeycomb(self.Q, geometry)
         deltaP_packed = self._pressure_drop_packed_bed(self.Q, 0.02)
-        P_ad_honey = self._fan_power(deltaP_honey, self.Q)
+        #P_ad_honey = self._fan_power(deltaP_honey, self.Q)
         P_ad_packed = self._fan_power(deltaP_packed, self.Q)
         self.P_ad = P_ad_packed
 

@@ -3,12 +3,10 @@ dt: ${dt}
 process_conditions: ${process_conditions}
 sorbent: ${dac.sorbent}
 P_heater: 5000
+CO2_per_cycle: 2000
 geometry:
-  volume: 112.5
   void_frac: 0.6
-  ri: 0.005
-  ro: 0.00505
-  l: 0.05
+  l: 0.02
 dq_max_cfg:
   _target_: models.sizing.dq_max_linear
   max_adsorption_rate: ${kinetics.rates.CO2.ad_max}

@@ -1,20 +1,15 @@
 program: system_simulation.py
 project: dac_system
-method: bayes
-name: rule_limits
+method: grid
+name: cem_desorb_pen
 metric:
   goal: maximize
   name: CO2_rate_(kg/h)
 
 parameters:
 
-  controller.loading_low:
-    min: 0.0
-    max: 0.5
-
-  controller.loading_high:
-    min: 0.5
-    max: 1.0
+  controller.desorb_pen:
+    values: [0, 0.2, 0.4, 0.6, 0.8, 1.0]
 
 command:
   - ${env}
@@ -23,3 +18,5 @@ command:
   - ${args_no_hyphens}
   - kinetics=first_order_t90
   - sizing=detailed_first_order
+  - controller=cem
+  - +dynamics_model=known_wind

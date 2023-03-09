@@ -186,7 +186,7 @@ class DiscreteCEM(BaseController):
                 next_state_pop = self.model.step(state_pop, controls)
                 start_desorb = np.logical_and(state_pop[:, -self.num_units:] != -1,
                                               controls == -1).sum(1)
-                rewards[:, h] = self.model.dac.CO2_captured - self.desorb_pen * start_desorb
+                rewards[:, h] = self.model.dac.CO2_captured * 1e-3 - self.desorb_pen * start_desorb
                 state_pop = next_state_pop
             elite = population[np.flip(np.argsort(rewards.sum(axis=1)))[:self.elite_num]]
             for h in range(self.horizon):

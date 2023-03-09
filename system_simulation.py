@@ -20,10 +20,9 @@ def run(cfg: DictConfig) -> None:
         wandb.config.update({"kinetics_": cfg.kinetics._target_.split(".")[-1],
                              "sizing_": cfg.sizing._target_.split(".")[-1],
                              "controller_": cfg.controller._target_.split(".")[-1]})
-
-        wind_power_series = load_wind_data(cfg.wind.file, cfg.dt, cfg.wind.var)
+        wind_power_series = load_wind_data("wind_power_sim", cfg.dt, cfg.get("wind_var", 0))
         wind_max = np.max(wind_power_series)
-        if cfg.wind.max_only:
+        if cfg.get("wind_max_only", False):
             wind_power_series = wind_max * np.ones_like(wind_power_series)
 
         iter_per_hour = 60 / cfg.dt
@@ -59,6 +58,7 @@ def run(cfg: DictConfig) -> None:
                                 np.zeros(dac.num_units)))
 
         hour = 0
+        wind_utilisation = 0
         total_co2_captured = 0
         wandb.config.CO2_per_cycle_kg = dac.num_units * (dac.m_CO2_eq["ad"] - dac.m_CO2_eq["de"])
         if "geometry" in cfg.sizing:
@@ -91,7 +91,7 @@ def run(cfg: DictConfig) -> None:
                 dac_power = dac.step(controls, update_state=False, return_power=True)
                 power_deficit = dac_power - wind_power - battery_discharge
 
-            battery_power = dac_power - wind_power
+            battery_power = np.clip(dac_power - wind_power, -battery.power_max, battery.power_max)
 
             state = np.concatenate((wind_power / wind_max,
                                     battery.step(battery_power).flatten(),
@@ -110,12 +110,15 @@ def run(cfg: DictConfig) -> None:
                        "CO2_captured_(kg)": dac.CO2_captured,
                        "Time_(h)": hour})
             total_co2_captured += dac.CO2_captured
+            if wind_power != 0:
+                wind_utilisation += (dac_power - battery_power) / wind_power
 
         co2_per_hour = total_co2_captured / (iters / iter_per_hour)
         wandb.log({"CO2_rate_(kg/h)": co2_per_hour,
-                   "CO2_rate_(ton/yr)": co2_per_hour / 1e3 * 24 * 365})
+                   "CO2_rate_(ton/yr)": co2_per_hour / 1e3 * 24 * 365,
+                   "wind_utilisation": wind_utilisation / iters})
         if "geometry" in cfg.sizing:
-            wandb.log({"Productivity_(kg/h/m^3)": co2_per_hour / cfg.sizing.geometry.volume})
+            wandb.log({"Productivity_(kg/h/m^3)": co2_per_hour / dac.sizing.geometry.volume})
 
 
 if __name__ == "__main__":
