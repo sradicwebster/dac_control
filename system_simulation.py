@@ -59,9 +59,9 @@ def run(cfg: DictConfig) -> None:
                                 prev_controls))
 
         hour = 0
-        wind_utilisation = 0
-        total_co2_captured = 0
-        desorptions = 0
+        wandb.define_metric("Wind_utilisation", summary="mean")
+        wandb.define_metric("CO2_captured_(kg_h)", summary="mean")
+        wandb.define_metric("Desorption_rate", summary="mean")
         wandb.config.CO2_per_cycle_kg = dac.num_units * (dac.m_CO2_eq["ad"] - dac.m_CO2_eq["de"])
         if "geometry" in cfg.sizing:
             wandb.config.sizing.update({"geometry": {"volume": dac.sizing.geometry.volume}})
@@ -100,6 +100,9 @@ def run(cfg: DictConfig) -> None:
                                     dac.step(controls).flatten(),
                                     controls))
 
+            start_desorb = np.logical_and(prev_controls != -1, controls == -1).sum()
+            prev_controls = controls
+            wind_util = [((dac_power - battery_power) / wind_power).item() if wind_power != 0 else 1][0]
             if (i + 1) % iter_per_hour == 0:
                 hour += 1
             for u in range(cfg.dac.num_units):
@@ -110,23 +113,10 @@ def run(cfg: DictConfig) -> None:
                        "DAC_power_(kW)": dac_power,
                        "Battery_SOC_(kWh)": state[1] * battery.capacity,
                        "CO2_captured_(kg)": dac.CO2_captured,
-                       "Time_(h)": hour})
-            total_co2_captured += dac.CO2_captured
-            if wind_power != 0:
-                wind_utilisation += (dac_power - battery_power) / wind_power
-            desorptions += np.logical_and(prev_controls != -1, controls == -1).sum()
-            prev_controls = controls
-
-        co2_per_hour = total_co2_captured / (iters / iter_per_hour)
-        wandb.log({"Performance":
-                       {"CO2_rate_(kg/h)": co2_per_hour,
-                        "CO2_rate_(ton/yr)": co2_per_hour / 1e3 * 24 * 365,
-                        "wind_utilisation": wind_utilisation / iters,
-                        "desorption_rate": desorptions / (dac.num_units * iters / iter_per_hour)},
-                   })
-        if "geometry" in cfg.sizing:
-            wandb.log({"Performance":
-                           {"Productivity_(kg/h/m^3)": co2_per_hour / dac.sizing.geometry.volume},
+                       "Time_(h)": hour,
+                       "Wind_utilisation": wind_util,
+                       "Desorption_rate": start_desorb * iter_per_hour / dac.num_units,
+                       "CO2_captured_(kg_h)": dac.CO2_captured * iter_per_hour
                        })
 
 
