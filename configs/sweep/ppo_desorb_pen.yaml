@@ -19,3 +19,4 @@ command:
   - kinetics=first_order_t90
   - sizing=detailed_first_order
   - controller=ppo
+  - +naming=[controller.desorb_pen]

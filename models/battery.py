@@ -48,7 +48,10 @@ class Battery:
 
         """
         self.soc = np.ones((n, 1)) * self.soc_max
-        return self.soc / self.soc_max
+        if self.capacity == 0:
+            return self.soc
+        else:
+            return self.soc / self.soc_max
 
     def step(self,
              power: np.ndarray,
@@ -70,7 +73,10 @@ class Battery:
                           power * (self.dt / 60) / self.discharge_eff,
                           power * (self.dt / 60) * self.charge_eff)
         self.soc = np.clip(self.soc - energy, self.soc_min, self.soc_max)
-        return self.soc / self.soc_max
+        if self.capacity == 0:
+            return self.soc
+        else:
+            return self.soc / self.soc_max
 
     def discharge_power(self,
                         ) -> np.ndarray:

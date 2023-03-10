@@ -16,10 +16,28 @@ OmegaConf.register_new_resolver("t90_to_k", lambda t90: np.log(1 / 0.1) / (60 * 
 def run(cfg: DictConfig) -> None:
     np.random.seed(cfg.seed)
 
-    with wandb.init(project="dac_system", config=OmegaConf.to_object(cfg)) as _:
-        wandb.config.update({"kinetics_": cfg.kinetics._target_.split(".")[-1],
-                             "sizing_": cfg.sizing._target_.split(".")[-1],
-                             "controller_": cfg.controller._target_.split(".")[-1]})
+    name_cfg = {"kinetics_cfg": cfg.kinetics._target_.split(".")[-1],
+                "sizing_cfg": cfg.sizing._target_.split(".")[-1],
+                "controller_cfg": cfg.controller._target_.split(".")[-1],
+                }
+    name = ""
+    if "naming" in cfg:
+        for n in cfg.naming:
+            if n + "_cfg" in name_cfg:
+                name += name_cfg[n + "_cfg"] + "_"
+            else:
+                cfg_val = cfg
+                for i, k in enumerate(n.split(".")):
+                    if i < len(n.split(".")) - 1:
+                        cfg_val = cfg_val[k]
+                    else:
+                        name += k + str(cfg_val[k]) + "_"
+        name = ("_").join(name.split("_")[:-1])
+    else:
+        name = None
+
+    with wandb.init(project="dac_system", config=OmegaConf.to_object(cfg), name=name) as run:
+        wandb.config.update(name_cfg)
         wind_power_series = load_wind_data("wind_power_sim", cfg.dt, cfg.get("wind_var", 0))
         wind_max = np.max(wind_power_series)
         if cfg.get("wind_max_only", False):

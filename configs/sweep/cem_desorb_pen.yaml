@@ -20,3 +20,4 @@ command:
   - sizing=detailed_first_order
   - controller=cem
   - +dynamics_model=known_wind
+  - +naming=[controller.desorb_pen]
