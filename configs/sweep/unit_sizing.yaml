@@ -1,21 +1,15 @@
 program: system_simulation.py
 project: dac_system
 method: grid
-name: cem_params
+name: unit_sizing
 metric:
   goal: maximize
   name: CO2_rate_(kg/h)
 
 parameters:
 
-  controller.horizon:
-    values: [6, 8, 10]
-
-  controller.population_size:
-    values: [200, 250]
-
-  controller.alpha:
-    values: [0.2, 0.4, 0.6]
+  sizing.CO2_per_cycle:
+    values: [1000, 2000, 3000, 4000, 5000, 6000]
 
 command:
   - ${env}
@@ -24,6 +18,4 @@ command:
   - ${args_no_hyphens}
   - kinetics=first_order_t90
   - sizing=detailed_first_order
-  - controller=cem
-  - controller.replan=True
-  - dynamics_model=known_wind
+  - +naming=[sizing.CO2_per_cycle]

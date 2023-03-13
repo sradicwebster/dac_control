@@ -2,4 +2,4 @@ _target_: controllers.UnitCyclingRule
 num_units: ${dac.num_units}
 dt: ${dt}
 regen_time: 30
-max_cycles: 6
+max_steps: 6

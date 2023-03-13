@@ -1,0 +1,31 @@
+program: train_rl_agent.py
+project: dac_system_rl_train
+method: bayes
+name: ac_params
+metric:
+  goal: maximize
+  name: CO2_rate_(kg/h)
+
+parameters:
+
+  controller.learning_rate:
+    distribution: log_uniform_values
+    min: -4
+    max: -3
+
+  controller.n_steps:
+    values: [4, 8, 16]
+
+  controller.gamma:
+    min: 0.7
+    max: 0.95
+
+command:
+  - ${env}
+  - python
+  - ${program}
+  - ${args_no_hyphens}
+  - kinetics=first_order_t90
+  - sizing=detailed_first_order
+  - controller=rl_ac
+  - +naming=[controller.learning_rate,controller.n_steps,controller.gamma]

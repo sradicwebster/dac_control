@@ -131,7 +131,8 @@ def run(cfg: DictConfig):
     wandb.init(project="dac_system_rl_train", config=OmegaConf.to_object(cfg),
                sync_tensorboard=True)
     env = DACEnv(cfg)
-    agent = instantiate(cfg.controller.algorithm, env=env, verbose=0, tensorboard_log="tb_log")
+    agent = instantiate(cfg.controller.algorithm, env=env, seed=cfg.seed, verbose=0,
+                        tensorboard_log="tb_log")
     agent.learn(cfg.controller.training_timesteps,
                 callback=WandBLogging(verbose=0))
     agent.save(f"trained_agents/{wandb.run.name}")

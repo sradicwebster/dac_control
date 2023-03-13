@@ -71,7 +71,7 @@ class UnitCyclingRule(BaseController):
                  num_units: int,
                  dt: int,
                  regen_time: int,
-                 max_cycles: int,
+                 max_steps: int,
                  ):
         """
 
@@ -79,14 +79,14 @@ class UnitCyclingRule(BaseController):
             num_units (int): number of DAC units
             dt (int): time step (mins)
             regen_time (int): desorption time (mins)
-            max_cycles (int): maximum number of cycles a particular unit waits inbetween desorption,
-                only affect if num_units > max_cycles for example if num_units = 10 and max_cycle =
+            max_steps (int): maximum number of steps a particular unit waits inbetween desorption,
+                only affect if num_units > max_steps for example if num_units = 10 and max_steps =
                 6 the controller iterates around dac number: [0, 1], [2, 3], [4, 5], [6, 7], [8],
                 [9]
 
         """
         self.num_units = num_units
-        self.unit_ops = np.array_split(np.arange(num_units), min(num_units, max_cycles))
+        self.unit_ops = np.array_split(np.arange(num_units), min(num_units, max_steps))
         self.regen_steps = np.ceil(regen_time / dt).astype(int)
         self.unit_op = 0
         self.step = 0

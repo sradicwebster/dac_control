@@ -1,0 +1,6 @@
+_target_: models.sizing.ConstantPower
+dt: ${dt}
+process_conditions: ${process_conditions}
+CO2_per_cycle: 2000
+fan_power: ${eval:${controller.CO2_per_cycle / 4}}
+desorption_power: ${eval:${controller.CO2_per_cycle * 2.5}}

@@ -3,11 +3,10 @@ algorithm:
   _target_: stable_baselines3.PPO
   policy: MlpPolicy
   learning_rate: 0.0005
+  clip_range: 0.1
   n_steps: 1024
-  batch_size: 64
+  batch_size: 32
   n_epochs: 10
   gamma: 0.9
-  clip_range: 0.1
-  target_kl: 0.05
 training_timesteps: 1e5
 desorb_pen: 0

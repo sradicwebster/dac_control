@@ -80,6 +80,9 @@ def run(cfg: DictConfig) -> None:
         wandb.define_metric("Wind_utilisation", summary="mean")
         wandb.define_metric("CO2_captured_(kg_h)", summary="mean")
         wandb.define_metric("Desorption_rate", summary="mean")
+        wandb.define_metric("CO2_captured_(kg)", summary="mean")
+        wandb.define_metric("Battery_SOC_(kWh)", summary="mean")
+        wandb.define_metric("Average_loading_(kg)", summary="mean")
         wandb.config.CO2_per_cycle_kg = dac.num_units * (dac.m_CO2_eq["ad"] - dac.m_CO2_eq["de"])
         if "geometry" in cfg.sizing:
             wandb.config.sizing.update({"geometry": {"volume": dac.sizing.geometry.volume}})
@@ -129,6 +132,7 @@ def run(cfg: DictConfig) -> None:
                            }, commit=False)
             wandb.log({"Wind_power_(kW)": state[0] * wind_max,
                        "DAC_power_(kW)": dac_power,
+                       "Average_loading_(kg)": state[2 + u].mean() * dac.m_CO2_eq["ad"],
                        "Battery_SOC_(kWh)": state[1] * battery.capacity,
                        "CO2_captured_(kg)": dac.CO2_captured,
                        "Time_(h)": hour,

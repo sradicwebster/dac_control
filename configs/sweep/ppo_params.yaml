@@ -1,0 +1,40 @@
+program: train_rl_agent.py
+project: dac_system_rl_train
+method: bayes
+name: ppo_params
+metric:
+  goal: maximize
+  name: CO2_rate_(kg/h)
+
+parameters:
+
+  controller.learning_rate:
+    distribution: log_uniform_values
+    min: -4
+    max: -3
+
+  controller.n_steps:
+    values: [256, 512, 1024, 2056]
+
+  controller.batch_size:
+    values: [16, 32, 64]
+
+  controller.n_epochs:
+    values: [5, 10, 15]
+
+  controller.gamma:
+    min: 0.7
+    max: 0.95
+
+  controller.clip_range:
+    min: 0.05
+    max: 0.3
+
+command:
+  - ${env}
+  - python
+  - ${program}
+  - ${args_no_hyphens}
+  - kinetics=first_order_t90
+  - sizing=detailed_first_order
+  - controller=rl_ppo
