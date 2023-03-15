@@ -4,10 +4,12 @@ process_conditions: ${process_conditions}
 sorbent: ${dac.sorbent}
 P_heater: 5000
 CO2_per_cycle: 2000
-contactor: "packed_bed"
+contactor: "honeycomb"
 geometry:
   void_frac: 0.6
-  l: 0.02
+  ri: 0.005
+  ro: 0.00505
+  l: 0.05
 dq_max_cfg:
   _target_: models.sizing.dq_max_linear
   max_adsorption_rate: ${kinetics.rates.CO2.ad_max}

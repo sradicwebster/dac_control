@@ -1,3 +1,4 @@
+from typing import Tuple, Dict
 from tqdm import tqdm
 import numpy as np
 import wandb
@@ -16,26 +17,7 @@ OmegaConf.register_new_resolver("t90_to_k", lambda t90: np.log(1 / 0.1) / (60 * 
 def run(cfg: DictConfig) -> None:
     np.random.seed(cfg.seed)
 
-    name_cfg = {"kinetics_cfg": cfg.kinetics._target_.split(".")[-1],
-                "sizing_cfg": cfg.sizing._target_.split(".")[-1],
-                "controller_cfg": cfg.controller._target_.split(".")[-1],
-                }
-    name = ""
-    if "naming" in cfg:
-        for n in cfg.naming:
-            if n + "_cfg" in name_cfg:
-                name += name_cfg[n + "_cfg"] + "_"
-            else:
-                cfg_val = cfg
-                for i, k in enumerate(n.split(".")):
-                    if i < len(n.split(".")) - 1:
-                        cfg_val = cfg_val[k]
-                    else:
-                        name += k + str(cfg_val[k]) + "_"
-        name = ("_").join(name.split("_")[:-1])
-    else:
-        name = None
-
+    name, name_cfg = get_run_name(cfg)
     with wandb.init(project="dac_system", config=OmegaConf.to_object(cfg), name=name) as run:
         wandb.config.update(name_cfg)
         wind_power_series = load_wind_data("wind_power_sim", cfg.dt, cfg.get("wind_var", 0))
@@ -43,9 +25,10 @@ def run(cfg: DictConfig) -> None:
         if cfg.get("wind_max_only", False):
             wind_power_series = wind_max * np.ones_like(wind_power_series)
 
+        T = cfg.get("T", -1)
         iter_per_hour = 60 / cfg.dt
-        if cfg.T != -1:
-            iters = int(cfg.T * iter_per_hour)
+        if T != -1:
+            iters = int(T * iter_per_hour)
         else:
             iters = len(wind_power_series) - 1
         assert iters < len(wind_power_series)
@@ -64,9 +47,6 @@ def run(cfg: DictConfig) -> None:
                                                      wind_power=wind_power_series,
                                                      _recursive_=False)
             controller = instantiate(cfg.controller, model=dynamics_model)
-            wandb.config.update({"dynamics_model_": cfg.dynamics_model._target_.split(".")[-1],
-                                 "wind_model_": cfg.dynamics_model.wind_model._target_.split(".")[-1],
-                                 })
         else:
             controller = instantiate(cfg.controller, _recursive_=False)
 
@@ -77,12 +57,9 @@ def run(cfg: DictConfig) -> None:
                                 prev_controls))
 
         hour = 0
-        wandb.define_metric("Wind_utilisation", summary="mean")
-        wandb.define_metric("CO2_captured_(kg_h)", summary="mean")
-        wandb.define_metric("Desorption_rate", summary="mean")
-        wandb.define_metric("CO2_captured_(kg)", summary="mean")
-        wandb.define_metric("Battery_SOC_(kWh)", summary="mean")
-        wandb.define_metric("Average_loading_(kg)", summary="mean")
+        metrics = ["Wind_utilisation", "CO2_captured_(kg_h)", "Desorption_rate",
+                   "Battery_SOC_(kWh)", "Average_loading_(kg)"]
+        [wandb.define_metric(metric, summary="mean") for metric in metrics]
         wandb.config.CO2_per_cycle_kg = dac.num_units * (dac.m_CO2_eq["ad"] - dac.m_CO2_eq["de"])
         if "geometry" in cfg.sizing:
             wandb.config.sizing.update({"geometry": {"volume": dac.sizing.geometry.volume}})
@@ -132,14 +109,41 @@ def run(cfg: DictConfig) -> None:
                            }, commit=False)
             wandb.log({"Wind_power_(kW)": state[0] * wind_max,
                        "DAC_power_(kW)": dac_power,
-                       "Average_loading_(kg)": state[2 + u].mean() * dac.m_CO2_eq["ad"],
+                       "Average_loading": state[2 + u].mean(),
                        "Battery_SOC_(kWh)": state[1] * battery.capacity,
                        "CO2_captured_(kg)": dac.CO2_captured,
                        "Time_(h)": hour,
                        "Wind_utilisation": wind_util,
-                       "Desorption_rate": start_desorb * iter_per_hour / dac.num_units,
+                       "Desorption_rate_(per_day)": start_desorb * iter_per_hour * 24 / dac.num_units,
                        "CO2_captured_(kg_h)": dac.CO2_captured * iter_per_hour
                        })
+
+
+def get_run_name(cfg: DictConfig) -> Tuple[str, Dict]:
+    name_cfg = {"kinetics_cfg": cfg.kinetics._target_.split(".")[-1],
+                "sizing_cfg": cfg.sizing._target_.split(".")[-1],
+                "controller_cfg": cfg.controller._target_.split(".")[-1],
+                }
+    if "dynamics_model" in cfg:
+        name_cfg["dynamics_model_cfg"] = cfg.dynamics_model.wind_model._target_.split(".")[-1]
+    if "algorithm" in cfg.controller:
+        name_cfg["algorithm_cfg"] = cfg.controller.algorithm._target_.split(".")[-1]
+    name = ""
+    if "naming" in cfg:
+        for n in cfg.naming:
+            if n + "_cfg" in name_cfg:
+                name += name_cfg[n + "_cfg"] + "_"
+            else:
+                cfg_val = cfg
+                for i, k in enumerate(n.split(".")):
+                    if i < len(n.split(".")) - 1:
+                        cfg_val = cfg_val[k]
+                    else:
+                        name += k + str(cfg_val[k]) + "_"
+        name = ("_").join(name.split("_")[:-1])
+    else:
+        name = None
+    return name, name_cfg
 
 
 if __name__ == "__main__":

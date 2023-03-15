@@ -13,7 +13,6 @@ plotting.py
 !data/sorbent_properties.csv
 !data/wind_power_sim.npy
 !data/wind_power_train.npy
-/configs/sizing/detailed_linear_honey.yaml
 
 
 # Byte-compiled / optimized / DLL files

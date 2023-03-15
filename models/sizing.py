@@ -5,6 +5,7 @@ from hydra.utils import call
 from typing import Tuple
 
 
+# TODO sort out docstrings and constants
 class BaseSizing:
 
     def __init__(self,
@@ -91,6 +92,7 @@ class Detailed(BaseSizing):
                  process_conditions: DictConfig,
                  sorbent: str,
                  P_heater: float,
+                 contactor: str,
                  dq_max_cfg: DictConfig,
                  geometry: DictConfig,
                  CO2_per_cycle: float = None,
@@ -120,15 +122,19 @@ class Detailed(BaseSizing):
             self.geometry.volume = self._volume_from_sorbent_mass(self.m_sorbent, geometry.void_frac)
 
         else:
+            assert "volume " in geometry,\
+                "'geometry.volum'e must be specified if 'CO2_per_cycle' is not specified"
             self.m_sorbent = self._sorbent_mass_from_geometry(geometry)
         self.Q = self._air_flow_rate(self.m_sorbent)
 
-        # TODO sort out this mess
-        #deltaP_honey = self._pressure_drop_honeycomb(self.Q, geometry)
-        deltaP_packed = self._pressure_drop_packed_bed(self.Q, 0.02)
-        #P_ad_honey = self._fan_power(deltaP_honey, self.Q)
-        P_ad_packed = self._fan_power(deltaP_packed, self.Q)
-        self.P_ad = P_ad_packed
+        if contactor == "packed_bed":
+            deltaP = self._pressure_drop_packed_bed(self.Q, geometry.l)
+            self.P_ad = self._fan_power(deltaP, self.Q)
+        elif contactor == "honeycomb":
+            deltaP = self._pressure_drop_honeycomb(self.Q, geometry)
+            self.P_ad = self._fan_power(deltaP, self.Q)
+        else:
+            raise Exception("contactor must be 'packed_bed' or 'honeycomb'")
 
     def _sorbent_mass_from_geometry(self,
                                     geometry: DictConfig,
@@ -208,7 +214,7 @@ class Detailed(BaseSizing):
 
     def _pressure_drop_packed_bed(self, Q, l):
         d_p = self.prop["dp"] * 1e-3
-        V_p = self.m_sorbent / self.prop["rho_p"]
+        V_p = self.m_sorbent / (self.prop["rho_p"] * self.prop["fb"])
         A_flow = V_p / l
         v_air = Q / A_flow
         Re = self.rho_air * v_air * d_p / self.mu_air

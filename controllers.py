@@ -206,16 +206,18 @@ class RLAgent(BaseController):
     def __init__(self,
                  algorithm: DictConfig,
                  training_timesteps: int,
-                 wandb_name: str,
+                 desorb_pen: float,
+                 name: str,
                  ) -> None:
         """
 
         Args:
             algorithm (DictConfig): algorithm parameters
             training_timesteps (int): number of training time steps
-            wandb_name (str): Weights & Biases name for training
+            desorb_pen (float): reward function penalty for starting to desorb
+            name (str): Weights & Biases name for training
         """
-        self.agent = eval(algorithm._target_).load(f"trained_agents/{wandb_name}")
+        self.agent = eval(algorithm._target_).load(f"trained_agents/{name}")
 
     def policy(self,
                state: np.ndarray,

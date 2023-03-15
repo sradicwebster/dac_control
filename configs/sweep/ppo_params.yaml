@@ -4,7 +4,7 @@ method: bayes
 name: ppo_params
 metric:
   goal: maximize
-  name: CO2_rate_(kg/h)
+  name: CO2_captured_(kg_h).mean
 
 parameters:
 
@@ -35,6 +35,4 @@ command:
   - python
   - ${program}
   - ${args_no_hyphens}
-  - kinetics=first_order_t90
-  - sizing=detailed_first_order
   - controller=rl_ppo

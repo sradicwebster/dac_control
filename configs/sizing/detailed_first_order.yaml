@@ -4,6 +4,7 @@ process_conditions: ${process_conditions}
 sorbent: ${dac.sorbent}
 P_heater: 5000
 CO2_per_cycle: 2000
+contactor: "packed_bed"
 geometry:
   void_frac: 0.8
   l: 0.02

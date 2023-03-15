@@ -4,7 +4,7 @@ method: bayes
 name: ac_params
 metric:
   goal: maximize
-  name: CO2_rate_(kg/h)
+  name: CO2_captured_(kg_h).mean
 
 parameters:
 

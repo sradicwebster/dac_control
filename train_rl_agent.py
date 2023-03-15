@@ -96,8 +96,8 @@ class DACEnv(gym.Env):
         if self.hour % (24 * 7) == 0:
             done = True
         if self.i == len(self.wind_power_series)-1:
-            self.wind_power_series = load_wind_data(self.cfg.wind.file, self.cfg.dt,
-                                                    self.cfg.wind.var)
+            self.wind_power_series = load_wind_data("wind_power_train", self.cfg.dt,
+                                                    self.cfg.get("wind_var", 0))
             self._reset_state()
             self.i = 0
             done = True
@@ -130,11 +130,11 @@ class WandBLogging(BaseCallback):
 def run(cfg: DictConfig):
     wandb.init(project="dac_system_rl_train", config=OmegaConf.to_object(cfg),
                sync_tensorboard=True)
+    wandb.config.update({"rl_algorithm": cfg.controller.algorithm._target_.split(".")[-1]})
     env = DACEnv(cfg)
     agent = instantiate(cfg.controller.algorithm, env=env, seed=cfg.seed, verbose=0,
                         tensorboard_log="tb_log")
-    agent.learn(cfg.controller.training_timesteps,
-                callback=WandBLogging(verbose=0))
+    agent.learn(cfg.controller.training_timesteps, callback=WandBLogging(verbose=0))
     agent.save(f"trained_agents/{wandb.run.name}")
 
 

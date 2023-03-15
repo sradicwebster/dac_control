@@ -3,6 +3,7 @@ import wandb
 import yaml
 import subprocess
 import os
+import math
 
 
 def run(config, count, num_proc):
@@ -13,6 +14,8 @@ def run(config, count, num_proc):
         wandb.agent(sweep_id, project=sweep_config["project"], count=count)
     else:
         command = ['wandb', 'agent', f'{os.environ["WANDB_ENTITY"]}/{sweep_config["project"]}/{sweep_id}']
+        if count is not None:
+            command.append(f'--count={math.ceil(count / num_proc)}')
         processes = [subprocess.Popen(command) for _ in range(num_proc)]
         for p in processes:
             p.wait()

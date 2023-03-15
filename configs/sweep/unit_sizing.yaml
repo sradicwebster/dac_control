@@ -4,18 +4,15 @@ method: grid
 name: unit_sizing
 metric:
   goal: maximize
-  name: CO2_rate_(kg/h)
+  name: CO2_captured_(kg_h).mean
 
 parameters:
 
   sizing.CO2_per_cycle:
-    values: [1000, 2000, 3000, 4000, 5000, 6000]
+    values: [1000, 2000, 3000, 4000, 5000]
 
 command:
   - ${env}
   - python
   - ${program}
   - ${args_no_hyphens}
-  - kinetics=first_order_t90
-  - sizing=detailed_first_order
-  - +naming=[sizing.CO2_per_cycle]

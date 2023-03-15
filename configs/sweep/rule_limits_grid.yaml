@@ -4,21 +4,18 @@ method: grid
 name: rule_limits
 metric:
   goal: maximize
-  name: CO2_rate_(kg/h)
+  name: CO2_captured_(kg_h).mean
 
 parameters:
 
   controller.loading_low:
-    values: [0.1, 0.2, 0.3, 0.4]
+    values: [0.1, 0.3, 0.5]
 
   controller.loading_high:
-    values: [0.6, 0.7, 0.8, 0.9]
+    values: [0.5, 0.7, 0.9]
 
 command:
   - ${env}
   - python
   - ${program}
   - ${args_no_hyphens}
-  - kinetics=first_order_t90
-  - sizing=detailed_first_order
-  - +naming=[controller.loading_low,controller.loading_high]
