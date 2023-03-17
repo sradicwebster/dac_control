@@ -3,11 +3,11 @@ dt: ${dt}
 process_conditions: ${process_conditions}
 sorbent: ${dac.sorbent}
 time_to_heat: 10
-CO2_per_cycle: 3000
+CO2_per_cycle: ${eval:6000 / ${dac.num_units}}
 contactor: "packed_bed"
 geometry:
   void_frac: 0.8
   l: 0.02
 dq_max_cfg:
-  _target_: models.sizing.dq_max_first_order
-  k: ${kinetics.k.CO2.ad_max}
+  _target_: models.sizing.dq_max_linear
+  max_adsorption_rate: ${kinetics.rates.CO2.ad_max}

@@ -9,7 +9,7 @@ metric:
 parameters:
 
   battery.capacity:
-    values: [0, 1000, 2000, 3000, 4000, 5000, 6000]
+    values: [0, 500, 1000, 1500, 2000, 2500]
 
 command:
   - ${env}

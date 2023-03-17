@@ -89,3 +89,15 @@ class Battery:
         discharge = np.minimum((self.soc - self.soc_min) * self.capacity / (self.dt / 60),
                                np.array([self.power_max]))
         return discharge
+
+    def charge_power(self,
+                     ) -> np.ndarray:
+        """ Available charge power
+
+        Returns:
+            (np.ndarray): power available in an array n x 1
+
+        """
+        charge = np.minimum((self.soc_max - self.soc) * self.capacity / (self.dt / 60),
+                            np.array([self.power_max]))
+        return charge

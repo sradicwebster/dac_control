@@ -57,10 +57,10 @@ def run(cfg: DictConfig) -> None:
                                 prev_controls))
 
         hour = 0
-        metrics = ["Wind_utilisation", "CO2_captured_(kg_h)", "Desorption_rate",
-                   "Battery_SOC_(kWh)", "Average_loading_(kg)"]
+        metrics = ["Wind_utilisation", "CO2_captured_(kg_h)", "Desorption_rate_(per_h)",
+                   "Battery_SOC_(kWh)", "Average_loading"]
         [wandb.define_metric(metric, summary="mean") for metric in metrics]
-        wandb.config.CO2_per_cycle_kg = dac.num_units * (dac.m_CO2_eq["ad"] - dac.m_CO2_eq["de"])
+        wandb.config.CO2_cycle_total_kg = dac.num_units * (dac.m_CO2_eq["ad"] - dac.m_CO2_eq["de"])
         if "geometry" in cfg.sizing:
             wandb.config.sizing.update({"geometry": {"volume": dac.sizing.geometry.volume}})
         for u in range(cfg.dac.num_units):
@@ -72,7 +72,6 @@ def run(cfg: DictConfig) -> None:
                    "Time_(h)": hour})
 
         for i in tqdm(range(iters)):
-
             controls = controller.policy(state)
             dac_power = dac.step(controls, update_state=False, return_power=True)
             wind_power = wind_power_series[i + 1]
@@ -91,7 +90,9 @@ def run(cfg: DictConfig) -> None:
                 dac_power = dac.step(controls, update_state=False, return_power=True)
                 power_deficit = dac_power - wind_power - battery_discharge
 
-            battery_power = np.clip(dac_power - wind_power, -battery.power_max, battery.power_max)
+            battery_power = np.clip(dac_power - wind_power,
+                                    -battery.charge_power(),
+                                    battery.discharge_power())
 
             state = np.concatenate((wind_power / wind_max,
                                     battery.step(battery_power).flatten(),
@@ -114,7 +115,7 @@ def run(cfg: DictConfig) -> None:
                        "CO2_captured_(kg)": dac.CO2_captured,
                        "Time_(h)": hour,
                        "Wind_utilisation": wind_util,
-                       "Desorption_rate_(per_day)": start_desorb * iter_per_hour * 24 / dac.num_units,
+                       "Desorption_rate_(per_h)": start_desorb * iter_per_hour / dac.num_units,
                        "CO2_captured_(kg_h)": dac.CO2_captured * iter_per_hour
                        })
 

@@ -1,6 +1,6 @@
 _target_: models.sizing.ConstantPower
 dt: ${dt}
 process_conditions: ${process_conditions}
-CO2_per_cycle: 2000
-fan_power: 500
-desorption_power: 5000
+CO2_per_cycle: 3000
+fan_power: 800
+desorption_power: 8000

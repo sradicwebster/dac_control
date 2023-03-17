@@ -57,13 +57,17 @@ class DAC:
 
         Returns:
             (np.ndarray): sorbent loading as a fraction of maximum loading in an array with shape
-                n x number of DAC units
+                n x 2.number of DAC units
 
         """
         self.m_CO2 = np.ones((n, self.num_units)) * self.m_CO2_eq["de"]
         self.m_H2O = np.ones((n, self.num_units)) * self.m_H2O_eq["de"]
         self.T_units = np.ones((n, self.num_units)) * self.process_conditions.T_ad
-        return self.m_CO2 / self.m_CO2_eq["ad"]
+        obs = np.concatenate((self.m_CO2 / self.m_CO2_eq["ad"],
+                              self.m_H2O / self.m_H2O_eq["ad"],
+                              self.T_units / self.process_conditions.T_de),
+                             axis=1)
+        return obs
 
     def step(self,
              mode: np.ndarray,
@@ -86,16 +90,15 @@ class DAC:
         """
         if mode.ndim == 1:
             mode = mode.reshape(1, -1)
-        T_units_next, t_desorb = self.sizing.temps_desorb_time(mode, self.T_units, self.m_CO2,
-                                                                   self.m_H2O)
+        T_units_next, t_desorb = self.sizing.temps_desorb_time(mode, self.T_units)
         q_CO2 = self.m_CO2 / (self.M_CO2 * self.sizing.m_sorbent)
         q_H2O = self.m_H2O / (self.M_H2O * self.sizing.m_sorbent)
         q_CO2_next = self.kinetics.step(mode, "CO2", q_CO2, t_desorb)
         q_H2O_next = self.kinetics.step(mode, "H2O", q_H2O, t_desorb)
         m_CO2_next = q_CO2_next * self.M_CO2 * self.sizing.m_sorbent
         m_H2O_next = q_H2O_next * self.M_H2O * self.sizing.m_sorbent
-        power = self.sizing.power_requirement(mode, self.m_CO2, self.m_H2O, m_CO2_next,
-                                                  m_H2O_next, self.T_units, T_units_next)
+        power = self.sizing.power_requirement(mode, self.m_CO2, self.m_H2O, m_CO2_next, m_H2O_next,
+                                              self.T_units, T_units_next)
         if update_state:
             self.CO2_captured = np.maximum(self.m_CO2 - m_CO2_next, 0.0).sum(axis=1)
             self.m_CO2 = m_CO2_next
@@ -104,4 +107,8 @@ class DAC:
         if return_power:
             return power.sum(axis=1, keepdims=True)
         else:
-            return m_CO2_next / self.m_CO2_eq["ad"]
+            obs = np.concatenate((self.m_CO2 / self.m_CO2_eq["ad"],
+                                  self.m_H2O / self.m_H2O_eq["ad"],
+                                  self.T_units / self.process_conditions.T_de),
+                                 axis=1)
+            return obs

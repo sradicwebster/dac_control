@@ -164,8 +164,7 @@ class DiscreteCEM(BaseController):
             (np.ndarray): control mode
 
         """
-        self.model.dac.reset(n=self.population_size)
-        self.model.battery.reset(n=self.population_size)
+        self.model.reset(state, n=self.population_size)
 
         if self.replan:
             self.action_prob = np.ones((self.horizon, self.num_units, 3)) / 3

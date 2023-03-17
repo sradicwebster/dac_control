@@ -28,6 +28,28 @@ class KnownModel:
         self.battery = battery
         self.wind_model = instantiate(wind_model, wind_power=wind_power)
         self.num_units = dac.num_units
+        self.prev_controls = None
+
+    def reset(self,
+              state: np.ndarray,
+              n: int = 1,
+              ):
+        """
+
+        Args:
+            state:
+            n:
+
+        Returns:
+
+        """
+        self.dac.m_CO2 = np.repeat(state[2: 2+self.num_units].reshape(1, -1) *
+                                   self.dac.m_CO2_eq["ad"], n, axis=0)
+        self.dac.m_H2O = np.repeat(state[2+self.num_units: 2+2*self.num_units].reshape(1, -1) *
+                                   self.dac.m_H2O_eq["ad"], n, axis=0)
+        self.dac.T_units = np.repeat(state[2+2*self.num_units: 2+3*self.num_units].reshape(1, -1) *
+                                     self.dac.process_conditions.T_de, n, axis=0)
+        self.battery.soc = np.repeat(state[1].reshape(1, -1) * self.battery.soc_max, n, axis=0)
 
     def step(self,
              state: np.ndarray,
@@ -62,4 +84,5 @@ class KnownModel:
                                      self.dac.step(controls),
                                      controls,
                                      ), axis=1)
+
         return next_state

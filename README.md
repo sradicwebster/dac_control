@@ -23,15 +23,10 @@ wandb online
 python system_simulation.py
 ```
 
-The experiment configuration can be recorded in a yaml file and then specified when running the script. For example:
+The experiment configurations can be changed by specifying the file name or overriden directly, for example:
 
 ```zsh
-python system_simulation.py controller=loading kinetics=first_order_t90
-```
-
-Alternatively, the configuration can be overriden from the command line. For example:
-
-```zsh
+python system_simulation.py controller=cycling kinetics=linear
 python system_simulation.py dac.num_units=4
 ```
 
@@ -44,11 +39,11 @@ python system_simulation.py controller=cem +dynamics_model=constant_wind
 A seperate script can be used to train and save a reinforcement learning agent using [Stable-Baselines3](https://stable-baselines3.readthedocs.io/en/master/index.html). 
 
 ```zsh
-python train_rl_agent.py controller=ppo
+python train_rl_agent.py controller=rl_ac
 ```
 
 After training the agent, the learnt policy can be evaluated by running:
 
 ```zsh
-python system_simulation.py controller=ppo +controller.wandb_name=WANDB_NAME
+python system_simulation.py controller=rl_ac +controller.name='W&B_NAME'
 ```

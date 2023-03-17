@@ -25,8 +25,6 @@ class BaseSizing:
     def temps_desorb_time(self,
                           mode: np.ndarray,
                           T: np.ndarray,
-                          m_CO2: np.ndarray,
-                          m_H2O: np.ndarray,
                           ) -> Tuple[np.ndarray, np.ndarray]:
         T_next = np.where(mode == -1,
                           self.process_conditions["T_de"],
@@ -91,14 +89,14 @@ class Detailed(BaseSizing):
                  q_CO2_eq: DictConfig,
                  process_conditions: DictConfig,
                  sorbent: str,
-                 P_heater: float,
+                 time_to_heat: float,
                  contactor: str,
                  dq_max_cfg: DictConfig,
                  geometry: DictConfig,
                  CO2_per_cycle: float = None,
                  ):
         super().__init__(dt, q_CO2_eq, process_conditions)
-        self.P_heater = P_heater
+        self.time_to_heat = time_to_heat
         self.dq_max_cfg = dq_max_cfg
         self.geometry = geometry
 
@@ -164,18 +162,14 @@ class Detailed(BaseSizing):
     def temps_desorb_time(self,
                           mode: np.ndarray,
                           T: np.ndarray,
-                          m_CO2: np.ndarray,
-                          m_H2O: np.ndarray,
                           ) -> Tuple[np.ndarray, np.ndarray]:
-        cp_sorb = self.prop["cp_s"] * 1e-3
-        E_sen = self._sensible_heat(T, self.T_de, m_CO2, m_H2O)
-        E_sorb = cp_sorb * self.m_sorbent * (self.T_de - T)
-        P_sorb = E_sorb / (E_sen + 1e-10) * self.P_heater
-        heat_temp = T + P_sorb * self.dt * 60 / (cp_sorb * self.m_sorbent)
-        T_next = np.where(mode == -1, heat_temp, self.T_ad)
-        T_next = np.minimum(T_next, self.T_de)
-        time_de = self.dt - cp_sorb * self.m_sorbent * (T_next - T) / ((P_sorb + 1e-10) * 60)
-        time_de = np.where(mode == -1, time_de, 0)
+        frac_heat_req = (self.T_de - T) / (self.T_de - self.T_ad)
+        time_heat_req = frac_heat_req * self.time_to_heat
+        time_heat = np.where(mode == -1, np.minimum(time_heat_req, self.dt), 0)
+        time_de = np.where(mode == -1, self.dt - time_heat, 0)
+        T_next = np.where(mode == -1,
+                          T + time_heat / self.time_to_heat * (self.T_de - self.T_ad),
+                          self.T_ad)
         return T_next, time_de
 
     def power_requirement(self,
@@ -187,9 +181,9 @@ class Detailed(BaseSizing):
                           T_units: np.ndarray,
                           T_units_next: np.ndarray,
                           ) -> np.ndarray:
-        E_de = self._heat_of_reaction(m_CO2 - m_CO2_next, m_H2O - m_H2O_next) + \
-               self._sensible_heat(T_units, T_units_next, m_CO2, m_H2O)
-        P_de = E_de / (60 * self.dt)
+        E_reac = self._heat_of_reaction(m_CO2 - m_CO2_next, m_H2O - m_H2O_next)
+        E_sens = self._sensible_heat(T_units, T_units_next, m_CO2, m_H2O)
+        P_de = (E_reac + E_sens) / (60 * self.dt)
         return np.select([mode == -1, mode == 0, mode == 1], [P_de, 0.0, self.P_ad])
 
     def _pressure_drop_honeycomb(self, Q, geometry):

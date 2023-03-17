@@ -34,8 +34,9 @@ class DACEnv(gym.Env):
         self.battery = hydra.utils.instantiate(cfg.battery)
 
         self.action_space = MultiDiscrete(3 * np.ones(self.dac.num_units))
-        obs_dim = 2 * self.dac.num_units + 2
-        obs_low = np.concatenate((np.zeros(self.dac.num_units + 2), -np.ones(self.dac.num_units)))
+        obs_dim = 4 * self.dac.num_units + 2
+        obs_low = np.concatenate((np.zeros(3 * self.dac.num_units + 2),
+                                  -np.ones(self.dac.num_units)))
         obs_high = np.ones(obs_dim)
         self.observation_space = Box(obs_low, obs_high, shape=(obs_dim,), dtype=np.float64)
 
