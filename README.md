@@ -26,8 +26,7 @@ python system_simulation.py
 The experiment configurations can be changed by specifying the file name or overriden directly, for example:
 
 ```zsh
-python system_simulation.py controller=cycling kinetics=linear
-python system_simulation.py dac.num_units=4
+python system_simulation.py dac.num_units=6 controller=cycling kinetics=sizing_nums_dacs
 ```
 
 To specify the cross entropy method (CEM) model predictive controller (MPC), a dynamics model must be specified in the command line, for example:

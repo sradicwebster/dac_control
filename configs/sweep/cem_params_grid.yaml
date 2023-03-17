@@ -1,6 +1,6 @@
 program: system_simulation.py
 project: dac_system
-method: bayes
+method: grid
 name: cem_params
 metric:
   goal: maximize
@@ -9,12 +9,13 @@ metric:
 parameters:
 
   controller.alpha:
-    min: 0.1
-    max: 0.3
+    values: [0.1, 0.2, 0.3]
 
   controller.elite_frac:
-    min: 0.1
-    max: 0.3
+    values: [0.1, 0.2, 0.3]
+
+  controller.replan:
+    values: [0, 1]
 
 command:
   - ${env}

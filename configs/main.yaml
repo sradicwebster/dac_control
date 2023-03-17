@@ -1,12 +1,12 @@
 defaults:
   - _self_
   - kinetics: linear
-  - sizing: detailed_linear
+  - sizing: detailed_linear_co2_total
   - battery: default
   - controller: loading
 
 seed: 1
-dt: 15
+dt: 20
 dac:
   _target_: models.dac.DAC
   num_units: 2
