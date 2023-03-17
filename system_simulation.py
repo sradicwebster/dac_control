@@ -110,7 +110,7 @@ def run(cfg: DictConfig) -> None:
                            }, commit=False)
             wandb.log({"Wind_power_(kW)": state[0] * wind_max,
                        "DAC_power_(kW)": dac_power,
-                       "Average_loading": state[2 + u].mean(),
+                       "Average_loading": state[2: 2 + cfg.dac.num_units].mean(),
                        "Battery_SOC_(kWh)": state[1] * battery.capacity,
                        "CO2_captured_(kg)": dac.CO2_captured,
                        "Time_(h)": hour,

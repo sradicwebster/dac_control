@@ -79,7 +79,7 @@ class KnownModel:
                     power_deficit = (dac_power - wind_power - battery_discharge) > 1e-3
 
         battery_power = dac_power - wind_power
-        next_state = np.concatenate((wind_power,
+        next_state = np.concatenate((wind_power / self.wind_model.wind_max,
                                      self.battery.step(battery_power),
                                      self.dac.step(controls),
                                      controls,

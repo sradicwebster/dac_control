@@ -14,6 +14,7 @@ class BaseModel:
             wind_power (np.ndarray): wind power series (kW)
         """
         self.wind_power = wind_power
+        self.wind_max = np.max(wind_power)
 
     def next(self,
              state: np.ndarray,
@@ -47,7 +48,7 @@ class Constant(BaseModel):
             (np.ndarray): wind power prediction
 
         """
-        return state[:, 0].reshape(-1, 1) * np.max(self.wind_power)
+        return state[:, 0].reshape(-1, 1) * self.wind_max
 
 
 class Known(BaseModel):
