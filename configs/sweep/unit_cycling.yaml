@@ -1,0 +1,25 @@
+program: system_simulation.py
+project: dac_system
+method: grid
+name: unit_cycling
+metric:
+  goal: maximize
+  name: CO2_captured_(kg_h).mean
+
+parameters:
+
+  controller.regen_time:
+    values: [30, 45, 60]
+
+  controller.max_steps:
+    values: [2, 3, 6]
+
+command:
+  - ${env}
+  - python
+  - ${program}
+  - ${args_no_hyphens}
+  - kinetics.rates.CO2.de=3.0
+  - dac.num_units=6
+  - controller=cycling
+  - +naming=[controller.regen_time,controller.max_steps]

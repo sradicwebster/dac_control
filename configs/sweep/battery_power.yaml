@@ -1,15 +1,15 @@
 program: system_simulation.py
 project: dac_system
 method: grid
-name: battery_capacity
+name: battery_power
 metric:
   goal: maximize
   name: CO2_captured_(kg_h).mean
 
 parameters:
 
-  battery.capacity:
-    values: [0, 250, 500, 750, 1000, 1250, 1500, 1750, 2000]
+  battery.power_max:
+    values: [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000]
 
 command:
   - ${env}
@@ -18,5 +18,4 @@ command:
   - ${args_no_hyphens}
   - sizing=detailed_linear
   - sizing.CO2_per_cycle=6000
-  - battery.power_max=4000
-  - +naming=[battery.capacity]
+  - +naming=[battery.power_max]

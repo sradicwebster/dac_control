@@ -73,7 +73,7 @@ class Battery:
                           power * (self.dt / 60) / self.discharge_eff,
                           power * (self.dt / 60) * self.charge_eff)
         self.soc = np.clip(self.soc - energy, self.soc_min, self.soc_max)
-        if self.capacity == 0:
+        if self.soc_max == 0:
             return self.soc
         else:
             return self.soc / self.soc_max
@@ -86,7 +86,7 @@ class Battery:
             (np.ndarray): power available in an array n x 1
 
         """
-        discharge = np.minimum((self.soc - self.soc_min) * self.capacity / (self.dt / 60),
+        discharge = np.minimum((self.soc - self.soc_min) / (self.dt / 60),
                                np.array([self.power_max]))
         return discharge
 
@@ -98,6 +98,6 @@ class Battery:
             (np.ndarray): power available in an array n x 1
 
         """
-        charge = np.minimum((self.soc_max - self.soc) * self.capacity / (self.dt / 60),
+        charge = np.minimum((self.soc_max - self.soc) / (self.dt / 60),
                             np.array([self.power_max]))
         return charge

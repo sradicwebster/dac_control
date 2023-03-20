@@ -1,5 +1,5 @@
 _target_: controllers.UnitCyclingRule
 num_units: ${dac.num_units}
 dt: ${dt}
-regen_time: 30
-max_steps: 6
+regen_time: 45
+max_steps: 3
