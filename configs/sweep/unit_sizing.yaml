@@ -9,10 +9,12 @@ metric:
 parameters:
 
   sizing.CO2_per_cycle:
-    values: [1000, 2000, 3000, 4000, 5000]
+    values: [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000]
 
 command:
   - ${env}
   - python
   - ${program}
   - ${args_no_hyphens}
+  - sizing=detailed_linear
+  - +naming=[sizing.CO2_per_cycle]

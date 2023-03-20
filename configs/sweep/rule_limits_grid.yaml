@@ -19,3 +19,4 @@ command:
   - python
   - ${program}
   - ${args_no_hyphens}
+  - +naming=[controller.loading_low,controller.loading_high]

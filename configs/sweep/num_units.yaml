@@ -17,3 +17,4 @@ command:
   - ${program}
   - ${args_no_hyphens}
   - sizing=detailed_linear_co2_total
+  - +naming=[dac.num_units]

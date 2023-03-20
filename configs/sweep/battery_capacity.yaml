@@ -9,10 +9,14 @@ metric:
 parameters:
 
   battery.capacity:
-    values: [0, 500, 1000, 1500, 2000, 2500]
+    values: [0, 500, 1000, 1500, 2000]
 
 command:
   - ${env}
   - python
   - ${program}
   - ${args_no_hyphens}
+  - sizing=detailed_linear
+  - sizing.CO2_per_cycle=6000
+  - battery.power_max=4000
+  - +naming=[battery.capacity]

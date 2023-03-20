@@ -79,7 +79,7 @@ class DACEnv(gym.Env):
             power_deficit = dac_power - wind_power - battery_discharge
 
         battery_power = self.dac_power - wind_power
-        prev_controls = self.state[self.dac.num_units + 2:]
+        prev_controls = self.state[-self.dac.num_units:]
         self.state = np.concatenate((wind_power / self.wind_max,
                                      self.battery.step(battery_power).flatten(),
                                      self.dac.step(controls).flatten(),

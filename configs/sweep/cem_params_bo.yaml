@@ -24,3 +24,4 @@ command:
   - controller=cem
   - +dynamics_model=known_wind
   - +T=48
+  - +naming=[controller.alpha,controller.elite_frac]

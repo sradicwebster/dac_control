@@ -17,3 +17,4 @@ command:
   - ${program}
   - ${args_no_hyphens}
   - controller=rl_ppo
+  - +naming=[controller.desorb_pen]
