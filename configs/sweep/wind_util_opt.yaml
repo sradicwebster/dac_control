@@ -1,0 +1,30 @@
+program: system_simulation.py
+project: dac_system
+method: bayes
+name: wind_util_opt
+metric:
+  goal: maximize
+  name: Wind_utilisation.mean
+
+parameters:
+
+  dac.num_units:
+    min: 8
+    max: 16
+
+  sizing.CO2_per_cycle:
+    values: [1500, 1750, 2000, 2250, 2500, 2750, 3000]
+
+early_terminate:
+  type: hyperband
+  min_iter: 100
+  eta: 2
+
+command:
+  - ${env}
+  - python
+  - ${program}
+  - ${args_no_hyphens}
+  - sizing=detailed_linear
+  - controller.loading_high=0.7
+  - +naming=[dac.num_units,sizing.CO2_per_cycle]
