@@ -18,7 +18,7 @@ def run(cfg: DictConfig) -> None:
     np.random.seed(cfg.seed)
 
     name, name_cfg = get_run_name(cfg)
-    with wandb.init(project="dac_system", config=OmegaConf.to_object(cfg), name=name) as run:
+    with wandb.init(project="dac_system", config=OmegaConf.to_object(cfg), name=name) as _:
         wandb.config.update(name_cfg)
         wind_power_series = load_wind_data("wind_power_sim", cfg.dt, cfg.get("wind_var", 0))
         wind_max = np.max(wind_power_series)
@@ -141,7 +141,7 @@ def get_run_name(cfg: DictConfig) -> Tuple[str, Dict]:
                         cfg_val = cfg_val[k]
                     else:
                         name += k + str(cfg_val[k]) + "_"
-        name = ("_").join(name.split("_")[:-1])
+        name = "_".join(name.split("_")[:-1])
     else:
         name = None
     return name, name_cfg

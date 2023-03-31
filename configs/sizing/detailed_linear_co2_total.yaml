@@ -3,7 +3,7 @@ dt: ${dt}
 process_conditions: ${process_conditions}
 sorbent: ${dac.sorbent}
 time_to_heat: 10
-CO2_per_cycle: ${eval:12000 / ${dac.num_units}}
+CO2_per_cycle: ${eval:10000 / ${dac.num_units}}
 contactor: "packed_bed"
 geometry:
   void_frac: 0.8

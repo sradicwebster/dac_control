@@ -1,6 +1,6 @@
 _target_: models.battery.Battery
 capacity: 2000
-power_max: 4000
+power_max: 2000
 charge_eff: 0.9
 discharge_eff: 0.9
 soc_min: 0.1

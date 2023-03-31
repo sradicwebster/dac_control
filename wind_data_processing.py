@@ -18,7 +18,7 @@ def load_wind_data(file: str,
         (np.ndarray): wind power series
 
     """
-    wind_file = f"wind_power_dt{dt}_var{var}.npy"
+    wind_file = f"{file}_dt{dt}_var{var}.npy"
     if wind_file in os.listdir("data"):
         wind_power_series = np.load(os.path.join("data", wind_file))
     else:
