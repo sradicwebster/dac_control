@@ -17,6 +17,6 @@ command:
   - ${program}
   - ${args_no_hyphens}
   - controller=cem
-  - +dynamics_model=known_wind
+  - +dynamics_model=constant_wind
   - +naming=[controller.desorb_pen]
   - +T=1000
